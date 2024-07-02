@@ -3,43 +3,29 @@
  *
  *  Created on: 07.12.2011
  *      Author: indorewala@servicerobotics.eu
+ * 	Edited on: 02.07.2024
+ * 		Author: BrOleg5
  */
 
 #include "ComROS.h"
-#include <sstream>
 
-ComROS::ComROS(rclcpp::Node* parent_node_ptr)
-{
-	parent_node_name_ = std::string(parent_node_ptr->get_name());
+ComROS::ComROS(rclcpp::Node::SharedPtr parent_node_ptr) {
+    parent_node_ptr_ = parent_node_ptr;
+    this->setName(parent_node_ptr_->get_name());
 }
 
-ComROS::~ComROS()
-{
+void ComROS::errorEvent(const char* errorString) {
+    RCLCPP_ERROR(parent_node_ptr_->get_logger(), errorString);
 }
 
-void ComROS::setName( const std::string& name )
-{
-	name_ = name;
+void ComROS::connectedEvent() {
+    RCLCPP_INFO(parent_node_ptr_->get_logger(), "Connected to Robotino with address %s", this->address());
 }
 
-void ComROS::errorEvent( const char* errorString )
-{
-	std::ostringstream os;
-	os << name_ << " : " << errorString;
-
-	RCLCPP_ERROR(rclcpp::get_logger(parent_node_name_), "%s", os.str().c_str() );
+void ComROS::connectionClosedEvent() {
+    RCLCPP_INFO(parent_node_ptr_->get_logger(), "Disconnected from Robotino with address %s", this->address());
 }
 
-void ComROS::connectedEvent()
-{
-	std::ostringstream os;
-	os << name_ << " connected to RTO.";
-	RCLCPP_INFO(rclcpp::get_logger(parent_node_name_), "%s", os.str().c_str());
-}
-
-void ComROS::connectionClosedEvent()
-{
-	std::ostringstream os;
-	os << name_ << " disconnected from RTO.";
-	RCLCPP_INFO(rclcpp::get_logger(parent_node_name_), "%s", os.str().c_str());
+void ComROS::logEvent(const char* message, int level) {
+    RCLCPP_INFO(parent_node_ptr_->get_logger(), "%d: %s", level, message);
 }
