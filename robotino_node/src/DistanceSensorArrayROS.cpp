@@ -6,38 +6,31 @@
  */
 
 #include "DistanceSensorArrayROS.h"
+#include <string>
 #include <cmath>
 
-DistanceSensorArrayROS::DistanceSensorArrayROS(rclcpp::Node* parent_node)
-{
-	distances_pub_ = parent_node->create_publisher<sensor_msgs::msg::PointCloud>("distance_sensors", 10);
+DistanceSensorArrayROS::DistanceSensorArrayROS(rclcpp::Node::SharedPtr parent_node_ptr) : range_msg_() {
+    parent_node_ptr_ = parent_node_ptr;
+    std::string node_name = parent_node_ptr_->get_name();
+    for (unsigned int i = 0; i < distance_pubs_.size(); i++) {
+        distance_pubs_[i] = parent_node_ptr_->create_publisher<sensor_msgs::msg::Range>(
+            "/" + node_name + "/ir" + std::to_string(i), 10);
+    }
+
+    range_msg_.radiation_type = range_msg_.INFRARED;
+    range_msg_.field_of_view = 0.7f;  // Will correct in the future
+    range_msg_.min_range = 0.04f;
+    range_msg_.max_range = 0.30f;
 }
 
-DistanceSensorArrayROS::~DistanceSensorArrayROS()
-{
-}
+void DistanceSensorArrayROS::distancesChangedEvent(const float* distances, unsigned int size) {
+    range_msg_.header.stamp = parent_node_ptr_->get_clock()->now();
 
-void DistanceSensorArrayROS::setTimeStamp(rclcpp::Time stamp)
-{
-	stamp_ = stamp;
-}
-
-void DistanceSensorArrayROS::distancesChangedEvent(const float* distances, unsigned int size)
-{
-	// Build the PointCloud msg
-	distances_msg_.header.stamp = stamp_;
-	distances_msg_.header.frame_id = "base_link";
-	distances_msg_.points.resize(size);
-
-	for(unsigned int i = 0; i < size; ++i)
-	{
-		// 0.698 radians = 40 Degrees
-		// 0.2 is the radius of the robot
-		distances_msg_.points[i].x = ( distances[i] + 0.2 ) * cos(0.698 * i);
-		distances_msg_.points[i].y = ( distances[i] + 0.2 ) * sin(0.698 * i);
-		distances_msg_.points[i].z = 0.05; // 5cm above ground
-	}
-
-	// Publish the msg
-	distances_pub_->publish(distances_msg_);
+    for (unsigned int i = 0; i < size; ++i) {
+        if ((distances[i] >= range_msg_.min_range) && (distances[i] <= range_msg_.max_range)) {
+            range_msg_.header.frame_id = distance_pubs_[i]->get_topic_name();
+            range_msg_.range = distances[i];
+            distance_pubs_[i]->publish(range_msg_);
+        }
+    }
 }
