@@ -3,6 +3,8 @@
  *
  *  Created on: 08.12.2011
  *      Author: indorewala@servicerobotics.eu
+ * 	Edited on: 03.07.2024
+ * 		Author: BrOleg5
  */
 
 #ifndef MOTORARRAYROS_H_
@@ -10,28 +12,28 @@
 
 #include "rec/robotino/api2/MotorArray.h"
 #include "rclcpp/rclcpp.hpp"
-#include "rto_msgs/msg/motor_readings.hpp"
+#include "sensor_msgs/msg/joint_state.hpp"
 
-class MotorArrayROS : public rec::robotino::api2::MotorArray
-{
-public:
-	MotorArrayROS(rclcpp::Node* parent_node);
-	~MotorArrayROS();
+class MotorArrayROS : public rec::robotino::api2::MotorArray {
+  public:
+    MotorArrayROS(rclcpp::Node::SharedPtr parent_node_ptr);
+    ~MotorArrayROS() {}
 
-	void setTimeStamp(rclcpp::Time stamp);
-	void getMotorReadings(std::vector<float> &velocities, std::vector<int> &positions );
-	void setParentNode(const rclcpp::Node::SharedPtr parent_node_ptr);
+  private:
+    rclcpp::Node::SharedPtr parent_node_ptr_;
+    rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_pub_;
+    sensor_msgs::msg::JointState joint_state_msg_;
+    bool hasPositions;
+    bool hasVelocities;
 
-private:
-	rclcpp::Node::SharedPtr parent_node;
-	rclcpp::Publisher<rto_msgs::msg::MotorReadings>::SharedPtr motor_pub_;
+    void velocitiesChangedEvent(const float* velocities, unsigned int size);
+    void positionsChangedEvent(const float* positions, unsigned int size);
 
-	rto_msgs::msg::MotorReadings motor_msg_;
-
-	rclcpp::Time stamp_;
-
-	void velocitiesChangedEvent( const float* velocities, unsigned int size );
-	void positionsChangedEvent( const float* positions, unsigned int size );
-	void currentsChangedEvent( const float* currents, unsigned int size );
+    inline void publish() {
+        joint_state_msg_.header.stamp = parent_node_ptr_->get_clock()->now();
+        joint_state_pub_->publish(joint_state_msg_);
+        hasPositions = false;
+        hasVelocities = false;
+    }
 };
 #endif /* MOTORARRAYROS_H_ */
