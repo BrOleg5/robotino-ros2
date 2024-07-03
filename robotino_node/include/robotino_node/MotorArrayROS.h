@@ -20,7 +20,7 @@ class MotorArrayROS : public rec::robotino::api2::MotorArray {
     ~MotorArrayROS() {}
 
   private:
-    rclcpp::Node::SharedPtr parent_node_ptr_;
+    rclcpp::Clock::SharedPtr clock_ptr_;
     rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_state_pub_;
     sensor_msgs::msg::JointState joint_state_msg_;
     bool hasPositions;
@@ -30,7 +30,7 @@ class MotorArrayROS : public rec::robotino::api2::MotorArray {
     void positionsChangedEvent(const float* positions, unsigned int size);
 
     inline void publish() {
-        joint_state_msg_.header.stamp = parent_node_ptr_->get_clock()->now();
+        joint_state_msg_.header.stamp = clock_ptr_->now();
         joint_state_pub_->publish(joint_state_msg_);
         hasPositions = false;
         hasVelocities = false;

@@ -12,10 +12,10 @@
 #include "MotorArrayROS.h"
 
 MotorArrayROS::MotorArrayROS(rclcpp::Node::SharedPtr parent_node_ptr) : joint_state_msg_() {
-    parent_node_ptr_ = parent_node_ptr;
-    std::string node_name = parent_node_ptr_->get_name();
+    clock_ptr_ = parent_node_ptr->get_clock();
+    std::string node_name = parent_node_ptr->get_name();
     joint_state_pub_ =
-        parent_node_ptr_->create_publisher<sensor_msgs::msg::JointState>("/" + node_name + "/joint_state", 10);
+        parent_node_ptr->create_publisher<sensor_msgs::msg::JointState>("/" + node_name + "/joint_state", 10);
 
     joint_state_msg_.header.frame_id = "base_link";
     joint_state_msg_.name.resize(3);

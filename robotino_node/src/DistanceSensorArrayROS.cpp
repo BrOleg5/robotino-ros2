@@ -3,6 +3,8 @@
  *
  *  Created on: 07.12.2011
  *      Author: indorewala@servicerobotics.eu
+ * 	Edited on: 03.07.2024
+ * 		Author: BrOleg5
  */
 
 #include "DistanceSensorArrayROS.h"
@@ -10,11 +12,11 @@
 #include <cmath>
 
 DistanceSensorArrayROS::DistanceSensorArrayROS(rclcpp::Node::SharedPtr parent_node_ptr) : range_msg_() {
-    parent_node_ptr_ = parent_node_ptr;
-    std::string node_name = parent_node_ptr_->get_name();
+    clock_ptr_ = parent_node_ptr->get_clock();
+    std::string node_name = parent_node_ptr->get_name();
     for (unsigned int i = 0; i < distance_pubs_.size(); i++) {
-        distance_pubs_[i] = parent_node_ptr_->create_publisher<sensor_msgs::msg::Range>(
-            "/" + node_name + "/ir" + std::to_string(i), 10);
+        distance_pubs_[i] =
+            parent_node_ptr->create_publisher<sensor_msgs::msg::Range>("/" + node_name + "/ir" + std::to_string(i), 10);
     }
 
     range_msg_.radiation_type = range_msg_.INFRARED;
@@ -24,7 +26,7 @@ DistanceSensorArrayROS::DistanceSensorArrayROS(rclcpp::Node::SharedPtr parent_no
 }
 
 void DistanceSensorArrayROS::distancesChangedEvent(const float* distances, unsigned int size) {
-    range_msg_.header.stamp = parent_node_ptr_->get_clock()->now();
+    range_msg_.header.stamp = clock_ptr_->now();
 
     for (unsigned int i = 0; i < size; ++i) {
         if ((distances[i] >= range_msg_.min_range) && (distances[i] <= range_msg_.max_range)) {
