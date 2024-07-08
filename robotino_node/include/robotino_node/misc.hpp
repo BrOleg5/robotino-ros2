@@ -1,0 +1,7 @@
+#ifndef MISC_HPP_
+#define MISC_HPP_
+
+template <typename T>
+constexpr T PI = T(3.14159265358979323846264338327950288419716939937510L);
+
+#endif  // MISC_HPP_
