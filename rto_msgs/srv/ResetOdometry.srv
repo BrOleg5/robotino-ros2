@@ -1,4 +1,5 @@
 float32 x # in meters
 float32 y # in meters
-float32 phi # in rad
+float32 phi # in radian
 ---
+bool status # true - values ​​were not set, false - values were not set within 500 ms

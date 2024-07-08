@@ -31,6 +31,7 @@ MotorArrayROS::MotorArrayROS(rclcpp::Node::SharedPtr parent_node_ptr) : joint_st
 
 void MotorArrayROS::velocitiesChangedEvent(const float* velocities, unsigned int size) {
     for (size_t i = 0; i < size; i++) {
+        // convertion from rpm to rad/s
         joint_state_msg_.velocity[i] = 2.0 * PI<double> * static_cast<double>(velocities[i]) / 60.0 / 32;
     }
     hasVelocities = true;
@@ -41,6 +42,7 @@ void MotorArrayROS::velocitiesChangedEvent(const float* velocities, unsigned int
 
 void MotorArrayROS::positionsChangedEvent(const int* positions, unsigned int size) {
     for (size_t i = 0; i < size; i++) {
+        // conversion from encoders pulses to rad
         // number of encoder pulses per revolution * (front edge + back edge)  * number of channels = 500 * 2 * 2 = 2000
         joint_state_msg_.position[i] = 2.0 * PI<double> * static_cast<double>(positions[i]) / (2000.0);
     }

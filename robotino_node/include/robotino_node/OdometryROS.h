@@ -17,32 +17,27 @@
 #include "nav_msgs/msg/odometry.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
 
-class OdometryROS: public rec::robotino::api2::Odometry
-{
-public:
-	OdometryROS(rclcpp::Node* parent_node);
-	~OdometryROS();
+class OdometryROS : public rec::robotino::api2::Odometry {
+  public:
+    OdometryROS(rclcpp::Node::SharedPtr parent_node_ptr);
+    ~OdometryROS() {}
 
-	void setTimeStamp(rclcpp::Time stamp);
+  private:
+    rclcpp::Clock::SharedPtr clock_ptr_;
+    rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odometry_pub_;
 
-private:
-	rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odometry_pub_;
+    rclcpp::Service<rto_msgs::srv::ResetOdometry>::SharedPtr reset_odometry_server_;
 
-	rclcpp::Service<rto_msgs::srv::ResetOdometry>::SharedPtr reset_odometry_server_;
+    nav_msgs::msg::Odometry odometry_msg_;
+    geometry_msgs::msg::TransformStamped odometry_transform_;
 
-	nav_msgs::msg::Odometry odometry_msg_;
-	geometry_msgs::msg::TransformStamped odometry_transform_;
+    tf2_ros::TransformBroadcaster odometry_transform_broadcaster_;
 
-	tf2_ros::TransformBroadcaster odometry_transform_broadcaster_;
-
-	rclcpp::Time stamp_;
-
-
-	void readingsEvent(double x, double y, double phi,
-			float vx, float vy, float omega, unsigned int sequence );
-	bool resetOdometryCallback(
-			rto_msgs::srv::ResetOdometry::Request::SharedPtr req,
-			rto_msgs::srv::ResetOdometry::Response::SharedPtr res);
+    void initMessage();
+    void initTransform();
+    void readingsEvent(double x, double y, double phi, float vx, float vy, float omega, unsigned int sequence);
+    bool resetOdometryCallback(rto_msgs::srv::ResetOdometry::Request::SharedPtr req,
+                               rto_msgs::srv::ResetOdometry::Response::SharedPtr res);
 };
 
 #endif /* ODOMETRYROS_H_ */
