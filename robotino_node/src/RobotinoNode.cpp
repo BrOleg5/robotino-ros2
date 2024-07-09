@@ -12,13 +12,8 @@
 #include "RobotinoNode.h"
 
 RobotinoNode::RobotinoNode()
-    : Node("robotino"),
-      bumper_(this->shared_from_this()),
-      com_(this->shared_from_this()),
-      distance_sensor_array_(this->shared_from_this()),
-      motor_array_(this->shared_from_this()),
-      omni_drive_(this->shared_from_this()) {
-    this->declare_parameter("hostname", "192.168.1.0");
+    : Node("robotino"), bumper_(this), com_(this), distance_sensor_array_(this), motor_array_(this), omni_drive_(this) {
+    this->declare_parameter("hostname", "192.168.0.1");
     this->declare_parameter("max_linear_vel", 1.0);
     this->declare_parameter("max_angular_vel", 3.0);
     this->declare_parameter("timer_period_ms", 50);

@@ -16,7 +16,7 @@
 using std::placeholders::_1;
 using std::placeholders::_2;
 
-OdometryROS::OdometryROS(rclcpp::Node::SharedPtr parent_node_ptr) : odometry_transform_broadcaster_(parent_node_ptr) {
+OdometryROS::OdometryROS(rclcpp::Node* parent_node_ptr) : odometry_transform_broadcaster_(parent_node_ptr) {
     clock_ptr_ = parent_node_ptr->get_clock();
     std::string node_name = parent_node_ptr->get_name();
     odometry_pub_ = parent_node_ptr->create_publisher<nav_msgs::msg::Odometry>("/" + node_name + "/odom", 10);

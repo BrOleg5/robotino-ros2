@@ -11,7 +11,7 @@
 
 #include "BumperROS.h"
 
-BumperROS::BumperROS(rclcpp::Node::SharedPtr parent_node_ptr) : bumper_msg_() {
+BumperROS::BumperROS(rclcpp::Node* parent_node_ptr) : bumper_msg_() {
     std::string node_name = parent_node_ptr->get_name();
     bumper_pub_ = parent_node_ptr->create_publisher<std_msgs::msg::Bool>("/" + node_name + "/bumper", 10);
 }

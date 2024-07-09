@@ -12,7 +12,7 @@
 #include "MotorArrayROS.h"
 #include "misc.hpp"
 
-MotorArrayROS::MotorArrayROS(rclcpp::Node::SharedPtr parent_node_ptr) : joint_state_msg_() {
+MotorArrayROS::MotorArrayROS(rclcpp::Node* parent_node_ptr) : joint_state_msg_() {
     clock_ptr_ = parent_node_ptr->get_clock();
     std::string node_name = parent_node_ptr->get_name();
     joint_state_pub_ =

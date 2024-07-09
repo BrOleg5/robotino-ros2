@@ -16,7 +16,7 @@
 
 class MotorArrayROS : public rec::robotino::api2::MotorArray {
   public:
-    MotorArrayROS(rclcpp::Node::SharedPtr parent_node_ptr);
+    MotorArrayROS(rclcpp::Node* parent_node_ptr);
     ~MotorArrayROS() {}
 
   private:

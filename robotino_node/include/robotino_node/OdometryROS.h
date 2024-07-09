@@ -21,7 +21,7 @@
 
 class OdometryROS : public rec::robotino::api2::Odometry {
   public:
-    OdometryROS(rclcpp::Node::SharedPtr parent_node_ptr);
+    OdometryROS(rclcpp::Node* parent_node_ptr);
     ~OdometryROS() {}
 
   private:

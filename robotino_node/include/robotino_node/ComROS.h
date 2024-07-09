@@ -17,11 +17,11 @@
 
 class ComROS : public rec::robotino::api2::Com {
   public:
-    ComROS(rclcpp::Node::SharedPtr parent_node_ptr);
+    ComROS(rclcpp::Node* parent_node_ptr);
     ~ComROS() {}
 
   private:
-    rclcpp::Node::SharedPtr parent_node_ptr_;
+    rclcpp::Logger logger_;
     void errorEvent(const char* errorString);
     void connectedEvent();
     void connectionClosedEvent();

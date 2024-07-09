@@ -17,7 +17,7 @@
 
 class OmniDriveROS : public rec::robotino::api2::OmniDrive {
   public:
-    OmniDriveROS(rclcpp::Node::SharedPtr parent_node_ptr);
+    OmniDriveROS(rclcpp::Node* parent_node_ptr);
     ~OmniDriveROS() {}
 
     void setSpeedLimit(double max_linear_vel, double max_angular_vel);

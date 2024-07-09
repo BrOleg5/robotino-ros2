@@ -11,7 +11,7 @@
 #include <string>
 #include <cmath>
 
-DistanceSensorArrayROS::DistanceSensorArrayROS(rclcpp::Node::SharedPtr parent_node_ptr) : range_msg_() {
+DistanceSensorArrayROS::DistanceSensorArrayROS(rclcpp::Node* parent_node_ptr) : range_msg_() {
     clock_ptr_ = parent_node_ptr->get_clock();
     std::string node_name = parent_node_ptr->get_name();
     for (unsigned int i = 0; i < distance_pubs_.size(); i++) {

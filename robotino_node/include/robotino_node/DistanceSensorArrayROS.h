@@ -18,7 +18,7 @@
 
 class DistanceSensorArrayROS : public rec::robotino::api2::DistanceSensorArray {
   public:
-    DistanceSensorArrayROS(rclcpp::Node::SharedPtr parent_node_ptr);
+    DistanceSensorArrayROS(rclcpp::Node* parent_node_ptr);
     ~DistanceSensorArrayROS() {}
 
   private:
