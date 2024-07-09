@@ -3,8 +3,8 @@
  *
  *  Created on: 06.12.2011
  *      Author: indorewala@servicerobotics.eu
- * 	Edited on: 02.07.2024
- * 		Author: BrOleg5
+ *  Edited on: 02.07.2024
+ *      Author: BrOleg5
  */
 
 #ifndef COMROS_H_
