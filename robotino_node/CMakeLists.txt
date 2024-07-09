@@ -35,21 +35,39 @@ find_package(nav_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(RobotinoAPI2 REQUIRED)
 find_package(builtin_interfaces REQUIRED)
+find_package(rto_msgs REQUIRED)
 
+add_executable(
+  robotino_node
+  src/robotino_node.cpp
+  src/RobotinoNode.cpp
+  src/BumperROS.cpp
+  src/ComROS.cpp
+  src/DistanceSensorArrayROS.cpp
+  src/MotorArrayROS.cpp
+  src/OmniDriveROS.cpp)
 
-# ament_target_dependencies(${PROJECT_NAME} rclcpp rto_msgs std_msgs geometry_msgs sensor_msgs tf2 tf2_ros nav_msgs builtin_interfaces) 
+target_link_libraries(robotino_node ${REC_ROBOTINO_API2_LIBRARY})
 
-# if(BUILD_TESTING)
-#   find_package(ament_lint_auto REQUIRED)
-#   set(ament_cmake_copyright_FOUND TRUE)
-#   set(ament_cmake_cpplint_FOUND TRUE)
-#   ament_lint_auto_find_test_dependencies()
-# endif()
+target_include_directories(
+  robotino_node PUBLIC
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME}>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
 
-# install(TARGETS
-#   rto_node
-#   rto_camera_node
-#   rto_laserrangefinder_node
-#   DESTINATION lib/${PROJECT_NAME})
+ament_target_dependencies(robotino_node rclcpp rto_msgs std_msgs geometry_msgs sensor_msgs tf2 tf2_ros nav_msgs builtin_interfaces) 
+
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  set(ament_cmake_copyright_FOUND TRUE)
+  set(ament_cmake_cpplint_FOUND TRUE)
+  ament_lint_auto_find_test_dependencies()
+endif()
+
+install(TARGETS
+  robotino_node
+  # rto_camera_node
+  # rto_laserrangefinder_node
+  DESTINATION lib/${PROJECT_NAME})
 
 ament_package()
