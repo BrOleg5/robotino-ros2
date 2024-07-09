@@ -13,11 +13,11 @@
 
 RobotinoNode::RobotinoNode()
     : Node("robotino"),
-      bumper_(this->make_shared()),
-      com_(this->make_shared()),
-      distance_sensor_array_(this->make_shared()),
-      motor_array_(this->make_shared()),
-      omni_drive_(this->make_shared()) {
+      bumper_(this->shared_from_this()),
+      com_(this->shared_from_this()),
+      distance_sensor_array_(this->shared_from_this()),
+      motor_array_(this->shared_from_this()),
+      omni_drive_(this->shared_from_this()) {
     this->declare_parameter("hostname", "192.168.1.0");
     this->declare_parameter("max_linear_vel", 1.0);
     this->declare_parameter("max_angular_vel", 3.0);
@@ -31,7 +31,7 @@ RobotinoNode::RobotinoNode()
     RCLCPP_INFO(this->get_logger(), "Connecting to Robotino with host IP %s\n", hostname.c_str());
 
     auto timer_period = std::chrono::milliseconds(this->get_parameter("timer_period_ms").as_int());
-    timer_ = this->create_wall_timer(timer_period, std::bind(&RobotinoNode::timerCallback));
+    timer_ = this->create_wall_timer(timer_period, std::bind(&ComROS::processEvents, &com_));
 }
 
 void RobotinoNode::initModules() {
@@ -40,8 +40,4 @@ void RobotinoNode::initModules() {
     omni_drive_.setComId(com_.id());
     omni_drive_.setSpeedLimit(this->get_parameter("max_linear_vel").as_double(),
                               this->get_parameter("max_angular_vel").as_double());
-}
-
-void RobotinoNode::timerCallback() {
-    com_.processEvents();
 }

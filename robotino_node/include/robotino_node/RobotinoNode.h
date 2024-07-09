@@ -33,7 +33,6 @@ class RobotinoNode : public rclcpp::Node {
     OmniDriveROS omni_drive_;
 
     void initModules();
-    void timerCallback();
 };
 
 #endif /* ROBOTINONODE_H_ */

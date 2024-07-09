@@ -6,7 +6,9 @@
  *  Edited on: 09.07.2024
  *      Author: BrOleg5
  */
+#include <memory>
 
+#include "rclcpp/rclcpp.hpp"
 #include "RobotinoNode.h"
 
 int main(int argc, char** argv) {
