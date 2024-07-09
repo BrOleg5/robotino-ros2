@@ -18,7 +18,8 @@ using std::placeholders::_2;
 
 OdometryROS::OdometryROS(rclcpp::Node::SharedPtr parent_node_ptr) : odometry_transform_broadcaster_(parent_node_ptr) {
     clock_ptr_ = parent_node_ptr->get_clock();
-    odometry_pub_ = parent_node_ptr->create_publisher<nav_msgs::msg::Odometry>("odom", 10);
+    std::string node_name = parent_node_ptr->get_name();
+    odometry_pub_ = parent_node_ptr->create_publisher<nav_msgs::msg::Odometry>("/" + node_name + "/odom", 10);
 
     reset_odometry_server_ = parent_node_ptr->create_service<rto_msgs::srv::ResetOdometry>(
         "reset_odometry", std::bind(&OdometryROS::resetOdometryCallback, this, _1, _2));

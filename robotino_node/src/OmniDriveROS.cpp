@@ -13,9 +13,10 @@
 
 using std::placeholders::_1;
 
-OmniDriveROS::OmniDriveROS(rclcpp::Node::SharedPtr parent_node_ptr) : max_linear_vel_(1.0), max_angular_vel_(4) {
+OmniDriveROS::OmniDriveROS(rclcpp::Node::SharedPtr parent_node_ptr) : max_linear_vel_(1.0), max_angular_vel_(2.0) {
+    std::string node_name = parent_node_ptr->get_name();
     cmd_vel_sub_ = parent_node_ptr->create_subscription<geometry_msgs::msg::Twist>(
-        "cmd_vel", 10, std::bind(&OmniDriveROS::cmdVelCallback, this, _1));
+        "/" + node_name + "/cmd_vel", 10, std::bind(&OmniDriveROS::cmdVelCallback, this, _1));
 }
 
 double OmniDriveROS::limit(double speed, double speed_limit) {
