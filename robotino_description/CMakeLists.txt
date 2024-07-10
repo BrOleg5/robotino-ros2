@@ -16,12 +16,15 @@ project(${PACKAGE_NAME} VERSION ${PACKAGE_VERSION})
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(xacro REQUIRED)
 
-install(DIRECTORY launch model rviz
-  DESTINATION share/${PROJECT_NAME}
+xacro_add_files(
+  robotino.urdf.xacro
+  TARGET xacro_target
+  INSTALL DESTINATION .
 )
 
-install(FILES robotino.urdf
+install(DIRECTORY launch model rviz
   DESTINATION share/${PROJECT_NAME}
 )
 
