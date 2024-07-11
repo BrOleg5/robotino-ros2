@@ -17,6 +17,7 @@ DistanceSensorArrayROS::DistanceSensorArrayROS(rclcpp::Node* parent_node_ptr) : 
     for (unsigned int i = 0; i < distance_pubs_.size(); i++) {
         distance_pubs_[i] =
             parent_node_ptr->create_publisher<sensor_msgs::msg::Range>("/" + node_name + "/ir" + std::to_string(i), 10);
+        range_frame_names[i] = "ir" + std::to_string(i);
     }
 
     range_msg_.radiation_type = range_msg_.INFRARED;
@@ -29,10 +30,8 @@ void DistanceSensorArrayROS::distancesChangedEvent(const float* distances, unsig
     range_msg_.header.stamp = clock_ptr_->now();
 
     for (unsigned int i = 0; i < size; ++i) {
-        if ((distances[i] >= range_msg_.min_range) && (distances[i] <= range_msg_.max_range)) {
-            range_msg_.header.frame_id = distance_pubs_[i]->get_topic_name();
-            range_msg_.range = distances[i];
-            distance_pubs_[i]->publish(range_msg_);
-        }
+        range_msg_.header.frame_id = range_frame_names[i];
+        range_msg_.range = distances[i];
+        distance_pubs_[i]->publish(range_msg_);
     }
 }
