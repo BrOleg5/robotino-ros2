@@ -45,7 +45,8 @@ add_executable(
   src/ComROS.cpp
   src/DistanceSensorArrayROS.cpp
   src/MotorArrayROS.cpp
-  src/OmniDriveROS.cpp)
+  src/OmniDriveROS.cpp
+  src/LaserRangeFinderROS.cpp)
 
 target_link_libraries(robotino_node ${REC_ROBOTINO_API2_LIBRARY})
 

@@ -15,6 +15,7 @@
 #include "DistanceSensorArrayROS.h"
 #include "MotorArrayROS.h"
 #include "OmniDriveROS.h"
+#include "LaserRangeFinderROS.h"
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -31,6 +32,7 @@ class RobotinoNode : public rclcpp::Node {
     DistanceSensorArrayROS distance_sensor_array_;
     MotorArrayROS motor_array_;
     OmniDriveROS omni_drive_;
+    LaserRangeFinderROS laser_range_finder_;
 
     void initModules();
 };
