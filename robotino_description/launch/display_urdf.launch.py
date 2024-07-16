@@ -10,7 +10,7 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     robotino_description_path = get_package_share_path('robotino_description')
-    default_model_path = os.path.join(robotino_description_path, 'urdf', 'robotino.urdf')
+    default_model_path = os.path.join(robotino_description_path, 'urdf/robotino.urdf')
     default_rviz_config_path = os.path.join(robotino_description_path, 'rviz/urdf.rviz')
 
     gui_arg = DeclareLaunchArgument(name='gui', default_value='true', choices=['true', 'false'],

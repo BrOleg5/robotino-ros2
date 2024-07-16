@@ -89,6 +89,41 @@
     <origin xyz="0.091 0 0.1915" rpy="0 0 0"/>
   </xacro:laser_range_finder>
 
+  <xacro:macro name="realsense_mounting_bracket" params="parent *origin">
+    <xacro:property name="realsense_pitch_angle" value="${13*PI/180}"/> <!-- 13 degree -->
+    <link name="realsense_bracket_base">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 ${PI/2} 0"/>
+        <geometry>
+          <mesh filename="package://robotino_description/meshes/RealsenseMountingBracket.dae" scale="1 1 1"/>
+        </geometry>
+      </visual>
+    </link>
+    <link name="realsense_mount"></link>
+    <joint name="realsense_mount_joint" type="fixed">
+      <parent link="realsense_bracket_base"/>
+      <child link="realsense_mount"/>
+      <origin xyz="0.0301 0 0.0532" rpy="0 ${realsense_pitch_angle} 0"/>
+    </joint>
+    <joint name="realsense_bracket_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child link="realsense_bracket_base"/>
+      <xacro:insert_block name="origin"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:realsense_mounting_bracket parent="base_link">
+    <origin xyz="0.0279 0 0.245" rpy="0 0 0"/>
+  </xacro:realsense_mounting_bracket>
+
+  <xacro:arg name="use_nominal_extrinsics" default="false"/>
+  <xacro:arg name="add_plug" default="false"/>
+  <xacro:arg name="use_mesh" default="true"/>
+  <xacro:include filename="$(find realsense2_description)/urdf/_d435.urdf.xacro"/>
+  <xacro:sensor_d435 parent="realsense_mount" use_nominal_extrinsics="$(arg use_nominal_extrinsics)" add_plug="$(arg add_plug)" use_mesh="$(arg use_mesh)">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </xacro:sensor_d435>
+
   <link name="platform_link">
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
