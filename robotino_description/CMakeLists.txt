@@ -19,9 +19,9 @@ find_package(ament_cmake REQUIRED)
 find_package(xacro REQUIRED)
 
 xacro_add_files(
-  robotino.urdf.xacro
+  urdf/robotino.urdf.xacro
   TARGET xacro_target
-  INSTALL DESTINATION .
+  INSTALL DESTINATION urdf
 )
 
 install(DIRECTORY launch meshes rviz
