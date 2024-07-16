@@ -24,7 +24,7 @@ xacro_add_files(
   INSTALL DESTINATION .
 )
 
-install(DIRECTORY launch model rviz
+install(DIRECTORY launch meshes rviz
   DESTINATION share/${PROJECT_NAME}
 )
 

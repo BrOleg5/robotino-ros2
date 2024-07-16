@@ -6,7 +6,7 @@
     <visual>
       <origin xyz="0 0 0.035" rpy="0 0 ${PI/2}"/>
       <geometry>
-        <mesh filename="package://robotino_description/model/Robotino3_SplitMain.dae" scale="0.01 0.01 0.01"/>
+        <mesh filename="package://robotino_description/meshes/Robotino3_SplitMain.dae" scale="0.01 0.01 0.01"/>
       </geometry>
     </visual>
     <collision>
@@ -24,7 +24,7 @@
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="package://robotino_description/model/Robotino3_SplitWheel.dae" scale="0.01 0.01 0.01"/>
+          <mesh filename="package://robotino_description/meshes/Robotino3_SplitWheel.dae" scale="0.01 0.01 0.01"/>
         </geometry>
       </visual>
     </link>
@@ -68,7 +68,7 @@
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="package://robotino_description/model/hokuyo.dae" scale="1 1 1"/>
+          <mesh filename="package://robotino_description/meshes/hokuyo.dae" scale="1 1 1"/>
         </geometry>
       </visual>
     </link>
@@ -93,12 +93,12 @@
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://robotino_description/model/Robotino3_Platform.dae" scale="0.009 0.009 0.009"/>
+        <mesh filename="package://robotino_description/meshes/Robotino3_Platform.dae" scale="0.009 0.009 0.009"/>
       </geometry>
     </visual>
     <collision>
       <geometry>
-        <mesh filename="package://robotino_description/model/Robotino3_Platform.dae" scale="0.009 0.009 0.009"/>
+        <mesh filename="package://robotino_description/meshes/Robotino3_Platform.dae" scale="0.009 0.009 0.009"/>
       </geometry>
     </collision>
   </link>
