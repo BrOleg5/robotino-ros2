@@ -25,6 +25,8 @@ class MotorArrayROS : public rec::robotino::api2::MotorArray {
     sensor_msgs::msg::JointState joint_state_msg_;
     bool hasPositions;
     bool hasVelocities;
+    double gearRatio;
+    double encoderResolutionPPR;
 
     void velocitiesChangedEvent(const float* velocities, unsigned int size);
     void positionsChangedEvent(const int* positions, unsigned int size);

@@ -10,18 +10,20 @@ if(NOT package_xml_str MATCHES "<version>([0-9]+\.[0-9]+\.[0-9]+)</version>")
   message(FATAL_ERROR "Could not parse project version from package.xml.")
 endif()
 set(PACKAGE_VERSION ${CMAKE_MATCH_1})
-message(STATUS "Package name: ${PACKAGE_NAME}\nPackage version: ${PACKAGE_VERSION}")
 
 project(${PACKAGE_NAME} VERSION ${PACKAGE_VERSION})
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(xacro REQUIRED)
 
-install(DIRECTORY launch model rviz
-  DESTINATION share/${PROJECT_NAME}
+xacro_add_files(
+  urdf/robotino.urdf.xacro
+  TARGET xacro_target
+  INSTALL DESTINATION urdf
 )
 
-install(FILES robotino.urdf
+install(DIRECTORY launch meshes rviz
   DESTINATION share/${PROJECT_NAME}
 )
 

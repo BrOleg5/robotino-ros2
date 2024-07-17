@@ -1,0 +1,146 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="robotino">
+  <xacro:property name="PI" value="3.14159265359"/>
+  <xacro:property name="base_radius" value="0.225"/>
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 0.035" rpy="0 0 ${PI/2}"/>
+      <geometry>
+        <mesh filename="package://robotino_description/meshes/Robotino3_SplitMain.dae" scale="0.01 0.01 0.01"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.1625" rpy="0 0 0"/>
+      <geometry>
+        <cylinder length="0.325" radius="${base_radius}"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <xacro:macro name="wheel" params="name angle">
+    <xacro:property name="wheel_radius" value="0.06"/>
+    <xacro:property name="wheel_distance" value="0.1811"/>
+    <link name="${name}_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://robotino_description/meshes/Robotino3_SplitWheel.dae" scale="0.01 0.01 0.01"/>
+        </geometry>
+      </visual>
+    </link>
+
+    <joint name="${name}_joint" type="continuous">
+      <parent link="base_link"/>
+      <child link="${name}_link"/>
+      <origin xyz="${wheel_distance * cos(angle)} ${wheel_distance * sin(angle)} ${wheel_radius}" rpy="0 0 ${angle + PI/2}"/>
+      <axis xyz="0 1 0" rpy="0 0 0"/>	
+    </joint>
+  </xacro:macro>
+  
+  <xacro:property name="wheel_delta_angle" value="${2*PI/3}"/> <!-- 120 degree = 2*PI/3 rad-->
+  <xacro:property name="orientation_shift" value="${PI/3}"/> <!-- 60 degree = PI/3 rad-->
+  <xacro:wheel name="wheel0" angle="${wheel_delta_angle - orientation_shift}"/>
+  <xacro:wheel name="wheel1" angle="${2*wheel_delta_angle - orientation_shift}"/>
+  <xacro:wheel name="wheel2" angle="${3*wheel_delta_angle - orientation_shift}"/>
+
+  <xacro:macro name="range_sensor" params="name angle">
+    <link name="${name}"></link>
+    <joint name="${name}_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="${name}"/>
+      <origin xyz="${base_radius*cos(angle)} ${base_radius*sin(angle)} 0.05" rpy="0 0 ${angle}"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:property name="sensor_delta_angle" value="${2*PI/9}"/> <!-- 40 degree = 2*PI/9 rad-->
+  <xacro:range_sensor name="ir0" angle="0"/>
+  <xacro:range_sensor name="ir1" angle="${1*sensor_delta_angle}"/>
+  <xacro:range_sensor name="ir2" angle="${2*sensor_delta_angle}"/>
+  <xacro:range_sensor name="ir3" angle="${3*sensor_delta_angle}"/>
+  <xacro:range_sensor name="ir4" angle="${4*sensor_delta_angle}"/>
+  <xacro:range_sensor name="ir5" angle="${5*sensor_delta_angle}"/>
+  <xacro:range_sensor name="ir6" angle="${6*sensor_delta_angle}"/>
+  <xacro:range_sensor name="ir7" angle="${7*sensor_delta_angle}"/>
+  <xacro:range_sensor name="ir8" angle="${8*sensor_delta_angle}"/>
+
+  <xacro:macro name="laser_range_finder" params="parent *origin">
+    <link name="laser_base">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://robotino_description/meshes/hokuyo.dae" scale="1 1 1"/>
+        </geometry>
+      </visual>
+    </link>
+    <link name="laser_link"></link>
+    <joint name="laser_link_joint" type="fixed">
+      <parent link="laser_base"/>
+      <child link="laser_link"/>
+      <origin xyz="0 0 0.05775" rpy="0 0 0"/>
+    </joint>
+    <joint name="laser_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child link="laser_base"/>
+      <xacro:insert_block name="origin"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:laser_range_finder parent="base_link">
+    <origin xyz="0.091 0 0.1915" rpy="0 0 0"/>
+  </xacro:laser_range_finder>
+
+  <xacro:macro name="realsense_mounting_bracket" params="parent *origin">
+    <xacro:property name="realsense_pitch_angle" value="${13*PI/180}"/> <!-- 13 degree -->
+    <link name="realsense_bracket_base">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 ${PI/2} 0"/>
+        <geometry>
+          <mesh filename="package://robotino_description/meshes/RealsenseMountingBracket.dae" scale="1 1 1"/>
+        </geometry>
+      </visual>
+    </link>
+    <link name="realsense_mount"></link>
+    <joint name="realsense_mount_joint" type="fixed">
+      <parent link="realsense_bracket_base"/>
+      <child link="realsense_mount"/>
+      <origin xyz="0.0301 0 0.0532" rpy="0 ${realsense_pitch_angle} 0"/>
+    </joint>
+    <joint name="realsense_bracket_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child link="realsense_bracket_base"/>
+      <xacro:insert_block name="origin"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:realsense_mounting_bracket parent="base_link">
+    <origin xyz="0.0279 0 0.245" rpy="0 0 0"/>
+  </xacro:realsense_mounting_bracket>
+
+  <xacro:arg name="use_nominal_extrinsics" default="false"/>
+  <xacro:arg name="add_plug" default="false"/>
+  <xacro:arg name="use_mesh" default="true"/>
+  <xacro:include filename="$(find realsense2_description)/urdf/_d435.urdf.xacro"/>
+  <xacro:sensor_d435 parent="realsense_mount" use_nominal_extrinsics="$(arg use_nominal_extrinsics)" add_plug="$(arg add_plug)" use_mesh="$(arg use_mesh)">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </xacro:sensor_d435>
+
+  <link name="platform_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://robotino_description/meshes/Robotino3_Platform.dae" scale="0.009 0.009 0.009"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="package://robotino_description/meshes/Robotino3_Platform.dae" scale="0.009 0.009 0.009"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="platform_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="platform_link"/>
+    <origin xyz="0 0 0" rpy="0 0 ${PI/2}"/>
+  </joint>
+</robot>

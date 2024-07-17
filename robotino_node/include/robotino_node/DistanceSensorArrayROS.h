@@ -11,6 +11,7 @@
 #define DISTANCESENSORARRAYROS_H_
 
 #include <array>
+#include <string>
 
 #include "rec/robotino/api2/DistanceSensorArray.h"
 #include "rclcpp/rclcpp.hpp"
@@ -25,6 +26,7 @@ class DistanceSensorArrayROS : public rec::robotino::api2::DistanceSensorArray {
     rclcpp::Clock::SharedPtr clock_ptr_;
     std::array<rclcpp::Publisher<sensor_msgs::msg::Range>::SharedPtr, 9> distance_pubs_;
     sensor_msgs::msg::Range range_msg_;
+    std::array<std::string, 9> range_frame_names;
 
     void distancesChangedEvent(const float* distances, unsigned int size);
 };

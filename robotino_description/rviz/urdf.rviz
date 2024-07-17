@@ -1,40 +1,266 @@
 Panels:
   - Class: rviz_common/Displays
+    Help Height: 70
     Name: Displays
+    Property Tree Widget:
+      Expanded:
+        - /TF1
+      Splitter Ratio: 0.5
+    Tree Height: 427
   - Class: rviz_common/Views
+    Expanded:
+      - /Current View1
     Name: Views
+    Splitter Ratio: 0.5
 Visualization Manager:
   Class: ""
   Displays:
-    - Class: rviz_default_plugins/Grid
+    - Alpha: 0.5
+      Cell Size: 1
+      Class: rviz_default_plugins/Grid
+      Color: 160; 160; 164
+      Enabled: true
+      Line Style:
+        Line Width: 0.029999999329447746
+        Value: Lines
       Name: Grid
+      Normal Cell Count: 0
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Plane: XY
+      Plane Cell Count: 10
+      Reference Frame: <Fixed Frame>
       Value: true
     - Alpha: 1
       Class: rviz_default_plugins/RobotModel
+      Collision Enabled: false
+      Description File: ""
       Description Source: Topic
       Description Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
         Value: /robot_description
       Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        camera_bottom_screw_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        camera_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        ir0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        ir1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        ir2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        ir3:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        ir4:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        ir5:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        ir6:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        ir7:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        ir8:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        laser_base:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        laser_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        platform_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wheel0_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wheel1_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        wheel2_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
       Name: RobotModel
+      TF Prefix: ""
+      Update Interval: 0
       Value: true
+      Visual Enabled: true
     - Class: rviz_default_plugins/TF
+      Enabled: true
+      Frame Timeout: 15
+      Frames:
+        All Enabled: true
+        base_link:
+          Value: true
+        camera_bottom_screw_frame:
+          Value: true
+        camera_link:
+          Value: true
+        ir0:
+          Value: true
+        ir1:
+          Value: true
+        ir2:
+          Value: true
+        ir3:
+          Value: true
+        ir4:
+          Value: true
+        ir5:
+          Value: true
+        ir6:
+          Value: true
+        ir7:
+          Value: true
+        ir8:
+          Value: true
+        laser_base:
+          Value: true
+        laser_link:
+          Value: true
+        platform_link:
+          Value: true
+        wheel0_link:
+          Value: true
+        wheel1_link:
+          Value: true
+        wheel2_link:
+          Value: true
+      Marker Scale: 0.20000000298023224
       Name: TF
+      Show Arrows: true
+      Show Axes: true
+      Show Names: false
+      Tree:
+        base_link:
+          camera_bottom_screw_frame:
+            camera_link:
+              {}
+          ir0:
+            {}
+          ir1:
+            {}
+          ir2:
+            {}
+          ir3:
+            {}
+          ir4:
+            {}
+          ir5:
+            {}
+          ir6:
+            {}
+          ir7:
+            {}
+          ir8:
+            {}
+          laser_base:
+            laser_link:
+              {}
+          platform_link:
+            {}
+          wheel0_link:
+            {}
+          wheel1_link:
+            {}
+          wheel2_link:
+            {}
+      Update Interval: 0
       Value: true
+  Enabled: true
   Global Options:
+    Background Color: 48; 48; 48
     Fixed Frame: base_link
     Frame Rate: 30
   Name: root
   Tools:
     - Class: rviz_default_plugins/MoveCamera
+  Transformation:
+    Current:
+      Class: rviz_default_plugins/TF
   Value: true
   Views:
     Current:
       Class: rviz_default_plugins/Orbit
-      Distance: 1.7
+      Distance: 1.7000000476837158
+      Enable Stereo Rendering:
+        Stereo Eye Separation: 0.05999999865889549
+        Stereo Focal Distance: 1
+        Swap Stereo Eyes: false
+        Value: false
+      Focal Point:
+        X: 0
+        Y: 0
+        Z: 0
+      Focal Shape Fixed Size: true
+      Focal Shape Size: 0.05000000074505806
+      Invert Z Axis: false
       Name: Current View
-      Pitch: 0.33
+      Near Clip Distance: 0.009999999776482582
+      Pitch: 0.33000001311302185
+      Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
       Yaw: 5.5
+    Saved: ~
 Window Geometry:
-  Height: 800
-  Width: 1200
+  Displays:
+    collapsed: false
+  Height: 1016
+  Hide Left Dock: false
+  Hide Right Dock: false
+  QMainWindow State: 000000ff00000000fd0000000100000000000001cb0000039efc0200000002fb000000100044006900730070006c006100790073010000003d0000022e000000c900fffffffb0000000a0056006900650077007301000002710000016a000000a400ffffff000005af0000039e00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  Views:
+    collapsed: false
+  Width: 1920
+  X: 0
+  Y: 27
