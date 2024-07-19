@@ -16,19 +16,14 @@
 using std::placeholders::_1;
 using std::placeholders::_2;
 
-OdometryROS::OdometryROS(rclcpp::Node* parent_node_ptr) : odometry_transform_broadcaster_(parent_node_ptr) {
+OdometryROS::OdometryROS(rclcpp::Node* parent_node_ptr)
+    : logger_(parent_node_ptr->get_logger()), odometry_transform_broadcaster_(parent_node_ptr) {
     clock_ptr_ = parent_node_ptr->get_clock();
     std::string node_name = parent_node_ptr->get_name();
     odometry_pub_ = parent_node_ptr->create_publisher<nav_msgs::msg::Odometry>("/" + node_name + "/odom", 10);
 
     reset_odometry_server_ = parent_node_ptr->create_service<rto_msgs::srv::ResetOdometry>(
         "reset_odometry", std::bind(&OdometryROS::resetOdometryCallback, this, _1, _2));
-
-    if (set(0.0, 0.0, 0.0, 500)) {
-        RCLCPP_INFO(parent_node_ptr->get_logger(), "Odometry is reset.")
-    } else {
-        RCLCPP_WARN(parent_node_ptr->get_logger(), "Odometry is not reset.")
-    }
 
     initMessage();
     initTransform();
@@ -93,4 +88,12 @@ void OdometryROS::readingsEvent(double x,
 void OdometryROS::resetOdometryCallback(rto_msgs::srv::ResetOdometry::Request::SharedPtr req,
                                         rto_msgs::srv::ResetOdometry::Response::SharedPtr res) {
     res->status = set(req->x, req->y, req->phi, 500);
+}
+
+void OdometryROS::reset() {
+    if (set(0.0, 0.0, 0.0, 500)) {
+        RCLCPP_INFO(logger_, "Odometry is reset.");
+    } else {
+        RCLCPP_WARN(logger_, "Odometry is not reset.");
+    }
 }

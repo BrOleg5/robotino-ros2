@@ -24,8 +24,11 @@ class OdometryROS : public rec::robotino::api2::Odometry {
     OdometryROS(rclcpp::Node* parent_node_ptr);
     ~OdometryROS() {}
 
+    void reset();
+
   private:
     rclcpp::Clock::SharedPtr clock_ptr_;
+    rclcpp::Logger logger_;
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odometry_pub_;
 
     rclcpp::Service<rto_msgs::srv::ResetOdometry>::SharedPtr reset_odometry_server_;
@@ -38,7 +41,7 @@ class OdometryROS : public rec::robotino::api2::Odometry {
     void initMessage();
     void initTransform();
     void readingsEvent(double x, double y, double phi, float vx, float vy, float omega, unsigned int sequence);
-    bool resetOdometryCallback(rto_msgs::srv::ResetOdometry::Request::SharedPtr req,
+    void resetOdometryCallback(rto_msgs::srv::ResetOdometry::Request::SharedPtr req,
                                rto_msgs::srv::ResetOdometry::Response::SharedPtr res);
 };
 
