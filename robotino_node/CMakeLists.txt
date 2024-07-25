@@ -59,6 +59,23 @@ target_include_directories(
 
 ament_target_dependencies(robotino_node rclcpp rto_msgs std_msgs geometry_msgs sensor_msgs tf2 tf2_ros nav_msgs builtin_interfaces) 
 
+add_executable(
+  robotino_camera_node
+  src/robotino_camera_node.cpp
+  src/RobotinoCameraNode.cpp
+  src/ComROS.cpp
+  src/CameraROS.cpp)
+
+target_link_libraries(robotino_camera_node ${REC_ROBOTINO_API2_LIBRARY})
+
+target_include_directories(
+  robotino_camera_node PUBLIC
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME}>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+
+ament_target_dependencies(robotino_camera_node rclcpp sensor_msgs)
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   set(ament_cmake_copyright_FOUND TRUE)
@@ -68,8 +85,7 @@ endif()
 
 install(TARGETS
   robotino_node
-  # rto_camera_node
-  # rto_laserrangefinder_node
+  robotino_camera_node
   DESTINATION lib/${PROJECT_NAME})
 
 ament_package()
