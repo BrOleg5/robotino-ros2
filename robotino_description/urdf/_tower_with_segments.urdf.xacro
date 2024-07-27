@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="tower_with_segments">
+  <link name="tower_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://robotino_description/meshes/TowerWithSegments.dae" scale="0.01 0.01 0.01"/>
+      </geometry>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="package://robotino_description/meshes/TowerWithSegments.dae" scale="0.01 0.01 0.01"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="tower_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="tower_link"/>
+    <origin xyz="0 0 0" rpy="0 0 ${radians(90)}"/>
+  </joint>
+</robot>
