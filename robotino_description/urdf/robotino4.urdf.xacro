@@ -3,6 +3,7 @@
   <xacro:property name="base_radius" value="0.225"/>
   <xacro:property name="base_height" value="0.325"/>
   <xacro:property name="base_mass" value="21.4"/> <!-- with 2 accumulators -->
+  <xacro:property name="base_clearance" value="0.019"/>
   <link name="base_link">
     <visual>
       <origin xyz="0 0 0.035" rpy="0 0 ${radians(90)}"/>
@@ -11,13 +12,13 @@
       </geometry>
     </visual>
     <collision>
-      <origin xyz="0 0 ${base_height/2}" rpy="0 0 0"/>
+      <origin xyz="0 0 ${base_height/2 + base_clearance}" rpy="0 0 0"/>
       <geometry>
         <cylinder length="${base_height}" radius="${base_radius}"/>
       </geometry>
     </collision>
     <inertial>
-      <origin xyz="0 0 ${base_height/2}" rpy="0 0 ${radians(90)}"/>
+      <origin xyz="0 0 ${base_height/2 + base_clearance}" rpy="0 0 ${radians(90)}"/>
       <mass value="${base_mass}"/>
       <inertia ixx="${base_mass*(3*base_radius**2 + base_height**2)/12}" ixy="0.0" ixz="0.0"
                iyy="${base_mass*(3*base_radius**2 + base_height**2)/12}" iyz="0.0"
