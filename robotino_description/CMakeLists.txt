@@ -18,8 +18,10 @@ find_package(ament_cmake REQUIRED)
 find_package(xacro REQUIRED)
 
 xacro_add_files(
-  urdf/robotino.urdf.xacro
-  TARGET xacro_target
+  urdf/robotino3.urdf.xacro
+  urdf/robotino4.urdf.xacro
+  urdf/robotino3_with_tower.urdf.xacro
+  urdf/robotino4_with_tower.urdf.xacro
   INSTALL DESTINATION urdf
 )
 
