@@ -9,7 +9,7 @@
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="package://robotino_description/meshes/robotino4/omniwheel_rotacaster_r2_1258_85.dae" scale="1 1 1"/>
+          <mesh filename="file://$(find robotino_description)/meshes/robotino4/omniwheel_rotacaster_r2_1258_85.dae" scale="1 1 1"/>
         </geometry>
       </visual>
       <collision>

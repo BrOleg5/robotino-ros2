@@ -9,7 +9,7 @@
       <visual>
         <origin xyz="0 0 0.035" rpy="0 0 ${radians(90)}"/>
         <geometry>
-          <mesh filename="package://robotino_description/meshes/robotino4/robotino4_base.dae" scale="0.01 0.01 0.01"/>
+          <mesh filename="file://$(find robotino_description)/meshes/robotino4/robotino4_base.dae" scale="0.01 0.01 0.01"/>
         </geometry>
       </visual>
       <collision>

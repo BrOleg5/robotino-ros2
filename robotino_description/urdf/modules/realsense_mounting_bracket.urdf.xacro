@@ -1,12 +1,13 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
   <xacro:macro name="realsense_mounting_bracket" params="parent *origin">
     <xacro:property name="realsense_pitch_angle" value="${radians(13)}"/>
     <link name="realsense_bracket_base">
       <visual>
         <origin xyz="0 0 0" rpy="0 ${radians(90)} 0"/>
         <geometry>
-          <mesh filename="package://robotino_description/meshes/modules/realsense_mounting_bracket.dae" scale="1 1 1"/>
+          <mesh filename="file://$(find robotino_description)/meshes/modules/realsense_mounting_bracket.dae" scale="1 1 1"/>
         </geometry>
       </visual>
     </link>
