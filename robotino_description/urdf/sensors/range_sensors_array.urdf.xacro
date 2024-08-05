@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:include filename="range_sensor.urdf.xacro"/>
+
+  <xacro:macro name="range_sensors_array" params="parent base_radius">
+    <xacro:property name="sensor_delta_angle" value="${radians(40)}"/>
+
+    <xacro:range_sensor name="ir0" angle="0" base_radius="${base_radius}" parent="${parent}"/>
+    <xacro:range_sensor name="ir1" angle="${1*sensor_delta_angle}" base_radius="${base_radius}" parent="${parent}"/>
+    <xacro:range_sensor name="ir2" angle="${2*sensor_delta_angle}" base_radius="${base_radius}" parent="${parent}"/>
+    <xacro:range_sensor name="ir3" angle="${3*sensor_delta_angle}" base_radius="${base_radius}" parent="${parent}"/>
+    <xacro:range_sensor name="ir4" angle="${4*sensor_delta_angle}" base_radius="${base_radius}" parent="${parent}"/>
+    <xacro:range_sensor name="ir5" angle="${5*sensor_delta_angle}" base_radius="${base_radius}" parent="${parent}"/>
+    <xacro:range_sensor name="ir6" angle="${6*sensor_delta_angle}" base_radius="${base_radius}" parent="${parent}"/>
+    <xacro:range_sensor name="ir7" angle="${7*sensor_delta_angle}" base_radius="${base_radius}" parent="${parent}"/>
+    <xacro:range_sensor name="ir8" angle="${8*sensor_delta_angle}" base_radius="${base_radius}" parent="${parent}"/>
+  </xacro:macro>
+</robot>

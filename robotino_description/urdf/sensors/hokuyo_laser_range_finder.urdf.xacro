@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="laser_range_finder" params="parent *origin">
+    <link name="laser_base">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://robotino_description/meshes/sensors/hokuyo.dae" scale="1 1 1"/>
+        </geometry>
+      </visual>
+    </link>
+    <link name="laser_link"></link>
+    <joint name="laser_link_joint" type="fixed">
+      <parent link="laser_base"/>
+      <child link="laser_link"/>
+      <origin xyz="0 0 0.05775" rpy="0 0 0"/>
+    </joint>
+    <joint name="laser_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child link="laser_base"/>
+      <xacro:insert_block name="origin"/>
+    </joint>
+  </xacro:macro>
+</robot>

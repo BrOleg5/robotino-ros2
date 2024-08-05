@@ -1,5 +1,9 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="robotino3">
   <xacro:include filename="robotino3.urdf.xacro"/>
-  <xacro:include filename="_tower_with_segments.urdf.xacro"/>
+  <xacro:include filename="modules/tower_with_segments.urdf.xacro"/>
+
+  <xacro:tower_with_segments parent="base_link">
+    <origin xyz="0 0 0" rpy="0 0 ${radians(90)}"/>
+  </xacro:tower_with_segments>
 </robot>

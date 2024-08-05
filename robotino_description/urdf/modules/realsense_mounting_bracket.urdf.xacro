@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <xacro:macro name="realsense_mounting_bracket" params="parent *origin">
+    <xacro:property name="realsense_pitch_angle" value="${radians(13)}"/>
+    <link name="realsense_bracket_base">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 ${radians(90)} 0"/>
+        <geometry>
+          <mesh filename="package://robotino_description/meshes/modules/realsense_mounting_bracket.dae" scale="1 1 1"/>
+        </geometry>
+      </visual>
+    </link>
+    <link name="realsense_mount"></link>
+    <joint name="realsense_mount_joint" type="fixed">
+      <parent link="realsense_bracket_base"/>
+      <child link="realsense_mount"/>
+      <origin xyz="0.0301 0 0.0532" rpy="0 ${realsense_pitch_angle} 0"/>
+    </joint>
+    <joint name="realsense_bracket_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child link="realsense_bracket_base"/>
+      <xacro:insert_block name="origin"/>
+    </joint>
+  </xacro:macro>
+</robot>
