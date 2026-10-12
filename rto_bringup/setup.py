@@ -1,6 +1,5 @@
-import os
-from glob import glob
 from setuptools import setup
+
 package_name = 'rto_bringup'
 
 setup(
@@ -13,9 +12,9 @@ setup(
         ('share/' + package_name, ['package.xml']),
         # ... Other data files
         # Include all launch files.
-        ('share/' + package_name, ['launch/rto_bringup_launch.py']), 
+        ('share/' + package_name, ['launch/rto_bringup_launch.py']),
         ('share/' + package_name, ['launch/rto_rviz_launch.py']),
-        ('share/' + package_name, ['rviz/rto_config.rviz']), 
+        ('share/' + package_name, ['rviz/rto_config.rviz']),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -23,7 +22,7 @@ setup(
     maintainer_email='karahul209@gmail.com',
     description='TODO: Package description',
     license='TODO: License declaration',
-    tests_require=['pytest'],
+    extras_require={'test': ['pytest']},
     entry_points={
         'console_scripts': [
         ],
