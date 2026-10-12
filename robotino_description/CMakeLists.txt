@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.20)
 
 # source: https://github.com/MarcTestier/ros2_cmake_test/blob/master/foo/CMakeLists.txt
 file(READ ${CMAKE_CURRENT_SOURCE_DIR}/package.xml package_xml_str)
