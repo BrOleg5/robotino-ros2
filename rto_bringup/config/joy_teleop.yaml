@@ -1,6 +1,6 @@
 # teleop_twist_joy parameters for the omnidirectional base of Robotino.
-# Button and axis numbers are given for an Xbox-like gamepad as reported by joy_node (SDL);
-# check them for your gamepad with `ros2 topic echo /joy`.
+# Button and axis numbers are given in the SDL GameController layout of joy's game_controller_node,
+# which is the same for all gamepads known to SDL (named here as on an Xbox gamepad).
 teleop_twist_joy_node:
   ros__parameters:
     axis_linear:  # Left stick: forward/backward and sideways

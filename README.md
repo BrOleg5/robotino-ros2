@@ -57,7 +57,8 @@ On Ubuntu 26.04 with ROS 2 Lyrical (or Ubuntu 24.04 with ROS 2 Jazzy):
 
 ### Gamepad teleop
 
-`ros2 launch rto_bringup joy_teleop_launch.py` starts `joy_node` and `teleop_twist_joy`, which publish
+`ros2 launch rto_bringup joy_teleop_launch.py` starts `game_controller_node` of the `joy` package and
+`teleop_twist_joy`, which publish
 velocity commands to `/robotino/cmd_vel`. It works with the real robot and the simulation alike.
 
 | Control | Action |
@@ -73,9 +74,11 @@ velocity commands to `/robotino/cmd_vel`. It works with the real robot and the s
 | `joy_vel` | `/robotino/cmd_vel` | Topic of velocity commands |
 | `config_filepath` | `rto_bringup/config/joy_teleop.yaml` | Axes, buttons and speed scales |
 
-Axis and button numbers in `joy_teleop.yaml` are given for an Xbox-like gamepad and may differ for
-other gamepads: check them with `ros2 run joy joy_node` and `ros2 topic echo /joy`, then pass your own
-file with `config_filepath:=<path>`.
+`game_controller_node` maps every gamepad known to SDL to the same layout of axes and buttons, so
+`joy_teleop.yaml` does not depend on the gamepad model (buttons are named as on an Xbox gamepad).
+`joy_node` publishes the raw layout of the gamepad driver instead, which does not match this file.
+To change the mapping, check axis and button numbers with `ros2 run joy game_controller_node` and
+`ros2 topic echo /joy`, then pass your own file with `config_filepath:=<path>`.
 
 The dev container gets the host's `/dev/input`, so gamepads connected to the host are available inside
 it, including ones plugged in after the container start. The container user needs read access to

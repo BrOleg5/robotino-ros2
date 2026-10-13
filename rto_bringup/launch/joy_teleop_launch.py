@@ -28,10 +28,12 @@ def generate_launch_description():
             ),
             description='teleop_twist_joy parameters: gamepad axes, buttons and speed scales',
         ),
+        # game_controller_node maps axes and buttons of any gamepad known to SDL to a single layout,
+        # so joy_teleop.yaml does not depend on the gamepad model and its driver.
         Node(
             package='joy',
-            executable='joy_node',
-            name='joy_node',
+            executable='game_controller_node',
+            name='game_controller_node',
             parameters=[{
                 'device_id': LaunchConfiguration('joy_dev'),
                 'deadzone': 0.1,
