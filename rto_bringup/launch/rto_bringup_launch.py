@@ -33,7 +33,7 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'robot_model',
-            default_value='robotino3',
+            default_value='robotino4',
             choices=[
                 'robotino3',
                 'robotino4',
