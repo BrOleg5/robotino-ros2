@@ -17,6 +17,9 @@
     "updateRemoteUserUID": true,
     "mounts": [
         "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind",
+        // Gamepads: input devices of the host and udev events for hotplug.
+        "source=/dev/input,target=/dev/input,type=bind",
+        "source=/run/udev,target=/run/udev,type=bind,readonly",
         // Colcon artifacts live outside the repository and survive container rebuilds.
         "source=robotino-ros2-${devcontainerId}-build,target=/home/ros/ws/build,type=volume",
         "source=robotino-ros2-${devcontainerId}-install,target=/home/ros/ws/install,type=volume",
@@ -26,7 +29,9 @@
         // Host network: DDS discovery and access to the Robotino by IP.
         "--network=host",
         "--ipc=host",
-        "--gpus=all"
+        "--gpus=all",
+        // Access to input devices (major number 13), including gamepads plugged in later.
+        "--device-cgroup-rule=c 13:* rmw"
     ],
     "containerEnv": {
         "DISPLAY": "${localEnv:DISPLAY}",

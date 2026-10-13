@@ -53,6 +53,33 @@ On Ubuntu 26.04 with ROS 2 Lyrical (or Ubuntu 24.04 with ROS 2 Jazzy):
 - **Note:** The robotino teleop package was not ported fully. To use keyboard teleop, run
   `ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=/robotino/cmd_vel`
   (`teleop_twist_keyboard` is preinstalled in the dev container).
+- To drive the robot with a gamepad, see [Gamepad teleop](#gamepad-teleop).
+
+### Gamepad teleop
+
+`ros2 launch rto_bringup joy_teleop_launch.py` starts `joy_node` and `teleop_twist_joy`, which publish
+velocity commands to `/robotino/cmd_vel`. It works with the real robot and the simulation alike.
+
+| Control | Action |
+| --- | --- |
+| LB (hold) | Enable motion; releasing it stops the robot |
+| RB (hold) | Turbo: higher speed |
+| Left stick | Drive forward/backward and sideways |
+| Right stick, horizontal | Rotate |
+
+| Argument | Default | Description |
+| --- | --- | --- |
+| `joy_dev` | `0` | Gamepad device id, if several gamepads are connected |
+| `joy_vel` | `/robotino/cmd_vel` | Topic of velocity commands |
+| `config_filepath` | `rto_bringup/config/joy_teleop.yaml` | Axes, buttons and speed scales |
+
+Axis and button numbers in `joy_teleop.yaml` are given for an Xbox-like gamepad and may differ for
+other gamepads: check them with `ros2 run joy joy_node` and `ros2 topic echo /joy`, then pass your own
+file with `config_filepath:=<path>`.
+
+The dev container gets the host's `/dev/input`, so gamepads connected to the host are available inside
+it, including ones plugged in after the container start. The container user needs read access to
+`/dev/input/event*` on the host; if the gamepad is not found, check the permissions of its device.
 
 ## Simulation in Gazebo
 
