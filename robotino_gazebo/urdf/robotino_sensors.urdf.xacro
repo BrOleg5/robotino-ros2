@@ -47,8 +47,10 @@
     </gazebo>
   </xacro:macro>
 
-  <!-- Infrared distance sensors ir0..ir<last_index>: a narrow fan of rays each,
-       sim_adapter.py converts every scan to sensor_msgs/Range -->
+  <!-- Infrared distance sensors ir0..ir<last_index>: Sharp GP2Y0A41SK0F, 4..30 cm, nine sensors
+       40 deg apart around the base (Festo Robotino 3 InfoPortal, Sharp datasheet). The beam width
+       is not specified, so each sensor is a narrow fan of rays; sim_adapter.py converts every scan
+       to sensor_msgs/Range. -->
   <xacro:macro name="ir_sensors_sim" params="last_index fov:=0.2 min_range:=0.04 max_range:=0.30">
     <gazebo reference="ir${last_index}">
       <sensor name="ir${last_index}" type="gpu_lidar">

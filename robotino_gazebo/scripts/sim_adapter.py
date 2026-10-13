@@ -7,6 +7,8 @@ Make the simulated Robotino look like robotino_node on the ROS side.
 - /robotino/sim/bumper (Contacts) -> /robotino/bumper (Bool)
 """
 
+import math
+
 from geometry_msgs.msg import Twist, TwistStamped
 import rclpy
 from rclpy.duration import Duration
@@ -54,15 +56,15 @@ class SimAdapter(Node):
         self.cmd_vel_pub.publish(stamped)
 
     def ir_callback(self, scan: LaserScan, pub):
-        # gz reports -inf for obstacles closer than range_min and +inf beyond range_max
-        valid = [max(r, scan.range_min) for r in scan.ranges if r < scan.range_max]
         rng = Range()
         rng.header = scan.header
         rng.radiation_type = Range.INFRARED
         rng.field_of_view = scan.angle_max - scan.angle_min
         rng.min_range = scan.range_min
         rng.max_range = scan.range_max
-        rng.range = min(valid) if valid else scan.range_max
+        # gz and REP 117 agree: -inf is closer than range_min, +inf is nothing within range_max,
+        # so RViz shows no cone when the sensor sees nothing, like on the real robot
+        rng.range = min((r for r in scan.ranges if not math.isnan(r)), default=math.inf)
         pub.publish(rng)
 
     def contacts_callback(self, msg: Contacts):
