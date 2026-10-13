@@ -38,7 +38,8 @@ find_package(RobotinoAPI2 REQUIRED)
 find_package(builtin_interfaces REQUIRED)
 find_package(rto_msgs REQUIRED)
 find_package(camera_info_manager REQUIRED)
-find_package(image_transport REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(TURBOJPEG REQUIRED IMPORTED_TARGET libturbojpeg)
 
 add_executable(
   robotino_node
@@ -86,7 +87,8 @@ target_link_libraries(
   ${REC_ROBOTINO_API2_LIBRARY}
   rclcpp::rclcpp
   camera_info_manager::camera_info_manager
-  image_transport::image_transport
+  PkgConfig::TURBOJPEG
+  ${std_msgs_TARGETS}
   ${sensor_msgs_TARGETS}
 )
 

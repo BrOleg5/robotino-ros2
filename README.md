@@ -62,14 +62,19 @@ On Ubuntu 26.04 with ROS 2 Lyrical (or Ubuntu 24.04 with ROS 2 Jazzy):
 ### Camera
 
 `robotino_camera_node` receives images of the Robotino camera via Robotino API2 and publishes them
-with `image_transport` in the `camera` namespace:
+in the `camera` namespace with the topic names of `image_transport`:
 
 | Topic / service | Type | Description |
 | --- | --- | --- |
 | `/camera/image_raw` | `sensor_msgs/Image` | Image, `rgb8` |
-| `/camera/image_raw/compressed`, `/zstd`, `/theora` | | The same image compressed by `image_transport` plugins, only when subscribed. Use them over Wi-Fi and for `ros2 bag` |
+| `/camera/image_raw/compressed` | `sensor_msgs/CompressedImage` | JPEG image, `compressed` transport of `image_transport`. Use it over Wi-Fi and for `ros2 bag` |
 | `/camera/camera_info` | `sensor_msgs/CameraInfo` | Calibration |
 | `/camera/robotino_camera/set_camera_info` | `sensor_msgs/SetCameraInfo` | Saves calibration to `camera_info_url` |
+
+JPEG images transferred by Robotino (`image_format:=mjpg`) are published to `image_raw/compressed` as is,
+without decoding and re-encoding. They are decoded (libjpeg-turbo) only when `image_raw` has subscribers.
+Raw images (`image_format:=raw`) are JPEG-encoded only when `image_raw/compressed` has subscribers.
+Without subscribers the node does no image processing at all.
 
 The node keeps running while Robotino is unreachable and reconnects automatically,
 camera settings are applied again on every connection.
@@ -83,6 +88,7 @@ Run it alone with
 | `frame_id` | `camera_optical_frame` | Frame of published messages |
 | `image_width`, `image_height` | `0` | Requested resolution, `0` keeps the current camera settings |
 | `image_format` | `mjpg` | Transfer format for the requested resolution: `mjpg` or `raw` |
+| `jpeg_quality` | `80` | JPEG quality of `image_raw/compressed` if Robotino transfers raw images |
 | `camera_name` | `camera` | Camera name in the calibration file |
 | `camera_info_url` | `""` | Calibration file, empty means `~/.ros/camera_info/<camera_name>.yaml` |
 | `timer_period_ms` | `20` | Period of polling Robotino API2 events |

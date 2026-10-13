@@ -21,12 +21,15 @@ RobotinoCameraNode::RobotinoCameraNode() : Node("robotino_camera"), com_(this), 
     // Requested resolution, 0 keeps the current camera settings
     this->declare_parameter("image_width", 0);
     this->declare_parameter("image_height", 0);
-    // "mjpg" (compressed transfer, decoded by Robotino API2) or "raw"
+    // "mjpg" (JPEG images are published to image_raw/compressed as is) or "raw"
     this->declare_parameter("image_format", "mjpg");
+    // Quality of JPEG encoding for image_raw/compressed, used only if Robotino transfers raw images
+    this->declare_parameter("jpeg_quality", 80);
 
     camera_.configure(this->get_parameter("frame_id").as_string(),
                       this->get_parameter("camera_name").as_string(),
-                      this->get_parameter("camera_info_url").as_string());
+                      this->get_parameter("camera_info_url").as_string(),
+                      this->get_parameter("jpeg_quality").as_int());
     camera_.setComId(com_.id());
 
     // Non-blocking connection with automatic reconnection: the node keeps running while Robotino is unreachable
