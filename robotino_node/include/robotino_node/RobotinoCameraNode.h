@@ -3,12 +3,14 @@
  *
  *  Created on: 09.12.2011
  *      Author: indorewala@servicerobotics.eu
- *  Edited on: 19.07.2024
+ *  Edited on: 13.10.2026
  *      Author: BrOleg5
  */
 
 #ifndef ROBOTINOCAMERANODE_H
 #define ROBOTINOCAMERANODE_H
+
+#include "rec/robotino/api2/RobotinoException.h"
 
 #include "rclcpp/rclcpp.hpp"
 

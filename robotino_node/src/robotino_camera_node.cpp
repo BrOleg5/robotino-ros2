@@ -7,6 +7,7 @@
  *      Author: BrOleg5
  */
 #include <memory>
+
 #include "rclcpp/rclcpp.hpp"
 #include "RobotinoCameraNode.h"
 

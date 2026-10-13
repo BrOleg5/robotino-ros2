@@ -37,6 +37,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(RobotinoAPI2 REQUIRED)
 find_package(builtin_interfaces REQUIRED)
 find_package(rto_msgs REQUIRED)
+find_package(camera_info_manager REQUIRED)
 
 add_executable(
   robotino_node
@@ -83,6 +84,7 @@ target_link_libraries(
   robotino_camera_node
   ${REC_ROBOTINO_API2_LIBRARY}
   rclcpp::rclcpp
+  camera_info_manager::camera_info_manager
   ${sensor_msgs_TARGETS}
 )
 

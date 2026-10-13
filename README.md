@@ -48,11 +48,38 @@ On Ubuntu 26.04 with ROS 2 Lyrical (or Ubuntu 24.04 with ROS 2 Jazzy):
 
 ## Usage
 - To bring up the robot, use `ros2 launch rto_bringup rto_bringup_launch.py hostname:=<robotino ip address> robot_model:=robotino3`
+  - `camera:=false` disables the camera node
+  - `camera_frame_id:=<frame>` overrides the frame of camera images. By default it is `camera_optical_frame`
+    (Logitech C920) for Robotino 3 and `camera_color_optical_frame` (RGB module of RealSense D435, published
+    by `realsense2_camera`) for Robotino 4
+  - `camera_info_url:=file:///path/to/calibration.yaml` sets the camera calibration file
 - To launch RViz visualization, use `ros2 launch rto_bringup rto_rviz_launch.py`
 - To view the robot model only, use `ros2 launch robotino_description display_urdf.launch.py robot_model:=robotino4`
 - **Note:** The robotino teleop package was not ported fully. To use keyboard teleop, run
   `ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=/robotino/cmd_vel`
   (`teleop_twist_keyboard` is preinstalled in the dev container).
+
+### Camera
+
+`robotino_camera_node` receives images of the Robotino camera via Robotino API2 and publishes
+`/image_raw` (`sensor_msgs/Image`, `rgb8`) and `/camera_info` (`sensor_msgs/CameraInfo`).
+Run it alone with `ros2 run robotino_node robotino_camera_node --ros-args -p hostname:=<robotino ip address>`.
+
+| Parameter | Default | Description |
+| --- | --- | --- |
+| `hostname` | `192.168.0.1` | Robotino IP address |
+| `camera_number` | `0` | Camera number, if Robotino has several cameras |
+| `frame_id` | `camera_optical_frame` | Frame of published messages |
+| `image_width`, `image_height` | `0` | Requested resolution, `0` keeps the current camera settings |
+| `image_format` | `mjpg` | Transfer format for the requested resolution: `mjpg` or `raw` |
+| `camera_name` | `camera` | Camera name in the calibration file |
+| `camera_info_url` | `""` | Calibration file, empty means `~/.ros/camera_info/<camera_name>.yaml` |
+| `timer_period_ms` | `20` | Period of polling Robotino API2 events |
+
+Without calibration `/camera_info` contains only the image size. To calibrate, run
+`ros2 run camera_calibration cameracalibrator --size 8x6 --square 0.025 --ros-args -r image:=/image_raw -r camera/set_camera_info:=/set_camera_info`
+(set `--size` and `--square` for your checkerboard)
+and press **Commit**: the calibration is saved via the `/set_camera_info` service to `camera_info_url`.
 
 ## Simulation in Gazebo
 
