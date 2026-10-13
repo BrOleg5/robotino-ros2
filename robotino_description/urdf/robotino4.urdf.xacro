@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="robotino4">
+  <xacro:include filename="robotino4/robotino4_base.urdf.xacro"/>
+  <xacro:include filename="robotino4/omniwheel.urdf.xacro"/>
+  <xacro:include filename="sensors/range_sensors_array.urdf.xacro"/>
+  <xacro:include filename="sensors/hokuyo_laser_range_finder.urdf.xacro"/>
+  <xacro:include filename="modules/realsense_mounting_bracket.urdf.xacro"/>
+
+  <xacro:include filename="$(find realsense2_description)/urdf/_d435.urdf.xacro"/>
+  
+  <xacro:property name="base_radius" value="0.225"/>
+  <xacro:robotino4_base/>
+  
+  <xacro:omniwheel name="wheel0" angle="${radians(60)}" parent="base_link"/>
+  <xacro:omniwheel name="wheel1" angle="${radians(180)}" parent="base_link"/>
+  <xacro:omniwheel name="wheel2" angle="${radians(300)}" parent="base_link"/>
+
+  <xacro:range_sensors_array parent="base_link" base_radius="${base_radius}"/>
+
+  <xacro:laser_range_finder parent="base_link">
+    <origin xyz="0.091 0 0.1915" rpy="0 0 0"/>
+  </xacro:laser_range_finder>
+
+  <xacro:realsense_mounting_bracket parent="base_link">
+    <origin xyz="0.0279 0 0.245" rpy="0 0 0"/>
+  </xacro:realsense_mounting_bracket>
+
+  <xacro:sensor_d435 parent="realsense_mount" use_nominal_extrinsics="false" add_plug="false" use_mesh="true">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </xacro:sensor_d435>
+</robot>

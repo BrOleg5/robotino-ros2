@@ -8,16 +8,14 @@
  */
 
 #include "OdometryROS.h"
-#include "tf2/transform_datatypes.h"
-#include "tf2/buffer_core.h"
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include "geometry_msgs/msg/quaternion.hpp"
 
 using std::placeholders::_1;
 using std::placeholders::_2;
 
 OdometryROS::OdometryROS(rclcpp::Node* parent_node_ptr)
-    : logger_(parent_node_ptr->get_logger()), odometry_transform_broadcaster_(parent_node_ptr) {
+    : logger_(parent_node_ptr->get_logger()), odometry_transform_broadcaster_(*parent_node_ptr) {
     clock_ptr_ = parent_node_ptr->get_clock();
     std::string node_name = parent_node_ptr->get_name();
     odometry_pub_ = parent_node_ptr->create_publisher<nav_msgs::msg::Odometry>("/" + node_name + "/odom", 10);
@@ -65,7 +63,7 @@ void OdometryROS::readingsEvent(double x,
                                 float vx,
                                 float vy,
                                 float omega,
-                                unsigned int sequence) {
+                                unsigned int /*sequence*/) {
     geometry_msgs::msg::Quaternion orient_quat = createQuaternionMsgFromYaw(phi);
 
     odometry_msg_.header.stamp = clock_ptr_->now();

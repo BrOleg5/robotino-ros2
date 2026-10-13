@@ -1,0 +1,62 @@
+{
+    "name": "robotino-ros2",
+    "build": {
+        "dockerfile": "Dockerfile",
+        // Robotino API2 is only available for amd64.
+        "options": ["--platform=linux/amd64"],
+        "args": {
+            // Supported: lyrical (default), jazzy. After changing it, rebuild the container
+            // and clean the colcon volumes: rm -rf ~/ws/build/* ~/ws/install/* ~/ws/log/*
+            "ROS_DISTRO": "lyrical",
+            "USERNAME": "ros"
+        }
+    },
+    "workspaceMount": "source=${localWorkspaceFolder},target=/home/ros/ws/src/robotino-ros2,type=bind",
+    "workspaceFolder": "/home/ros/ws/src/robotino-ros2",
+    "remoteUser": "ros",
+    "updateRemoteUserUID": true,
+    "mounts": [
+        "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind",
+        // Colcon artifacts live outside the repository and survive container rebuilds.
+        "source=robotino-ros2-${devcontainerId}-build,target=/home/ros/ws/build,type=volume",
+        "source=robotino-ros2-${devcontainerId}-install,target=/home/ros/ws/install,type=volume",
+        "source=robotino-ros2-${devcontainerId}-log,target=/home/ros/ws/log,type=volume"
+    ],
+    "runArgs": [
+        // Host network: DDS discovery and access to the Robotino by IP.
+        "--network=host",
+        "--ipc=host",
+        "--gpus=all"
+    ],
+    "containerEnv": {
+        "DISPLAY": "${localEnv:DISPLAY}",
+        "QT_X11_NO_MITSHM": "1",
+        "NVIDIA_DRIVER_CAPABILITIES": "all",
+        // Render OpenGL on the NVIDIA GPU on hybrid-graphics laptops (PRIME on-demand mode).
+        "__NV_PRIME_RENDER_OFFLOAD": "1",
+        "__GLX_VENDOR_LIBRARY_NAME": "nvidia",
+        "ROS_DOMAIN_ID": "${localEnv:ROS_DOMAIN_ID:0}",
+        "RCUTILS_COLORIZED_OUTPUT": "1"
+    },
+    "initializeCommand": "xhost +local:docker || true",
+    "postCreateCommand": "sudo chown ros:ros /home/ros/ws/build /home/ros/ws/install /home/ros/ws/log && cd /home/ros/ws && sudo apt-get update && rosdep install --from-paths src --ignore-src -y && bash -c 'source /opt/ros/$ROS_DISTRO/setup.bash && colcon build --symlink-install --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON'",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-vscode.cpptools",
+                "ms-vscode.cmake-tools",
+                "ms-python.python",
+                "ranch-hand-robotics.rde-pack",
+                "redhat.vscode-xml"
+            ],
+            "settings": {
+                "C_Cpp.default.compileCommands": [
+                    "/home/ros/ws/build/robotino_node/compile_commands.json",
+                    "/home/ros/ws/build/rto_msgs/compile_commands.json"
+                ],
+                "cmake.configureOnOpen": false,
+                "terminal.integrated.defaultProfile.linux": "bash"
+            }
+        }
+    }
+}

@@ -9,8 +9,14 @@
   <author email="v@rec.de">Christian Verbeek</author>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>xacro</buildtool_depend>
 
   <depend>realsense2_description</depend>
+
+  <exec_depend>joint_state_publisher</exec_depend>
+  <exec_depend>joint_state_publisher_gui</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>rviz2</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

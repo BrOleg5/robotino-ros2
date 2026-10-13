@@ -7,6 +7,7 @@
  * 	    Author: BrOleg5
  */
 
+#include <algorithm>
 #include <string>
 
 #include "MotorArrayROS.h"
@@ -33,10 +34,14 @@ MotorArrayROS::MotorArrayROS(rclcpp::Node* parent_node_ptr) : joint_state_msg_()
     encoderResolutionPPR = 2000.0;
 }
 
+// Positive motor speed of Robotino API2 drives the robot anti-clockwise around its center,
+// while positive rotation of wheel joints in robotino_description (and ros2_control
+// omni_wheel_drive_controller) drives it clockwise, so the sign is inverted.
 void MotorArrayROS::velocitiesChangedEvent(const float* velocities, unsigned int size) {
-    for (size_t i = 0; i < size; i++) {
+    // Robotino API2 reports all motor channels of the controller (4), but only the first 3 drive wheels
+    for (size_t i = 0; i < std::min<size_t>(size, joint_state_msg_.velocity.size()); i++) {
         // convertion from rpm to rad/s
-        joint_state_msg_.velocity[i] = 2.0 * PI<double> * static_cast<double>(velocities[i]) / 60.0 / gearRatio;
+        joint_state_msg_.velocity[i] = -2.0 * PI<double> * static_cast<double>(velocities[i]) / 60.0 / gearRatio;
     }
     hasVelocities = true;
     if (hasPositions && hasVelocities) {
@@ -45,10 +50,10 @@ void MotorArrayROS::velocitiesChangedEvent(const float* velocities, unsigned int
 }
 
 void MotorArrayROS::positionsChangedEvent(const int* positions, unsigned int size) {
-    for (size_t i = 0; i < size; i++) {
+    for (size_t i = 0; i < std::min<size_t>(size, joint_state_msg_.position.size()); i++) {
         // conversion from encoders pulses to rad
         joint_state_msg_.position[i] =
-            2.0 * PI<double> * static_cast<double>(positions[i]) / encoderResolutionPPR / gearRatio;
+            -2.0 * PI<double> * static_cast<double>(positions[i]) / encoderResolutionPPR / gearRatio;
     }
     hasPositions = true;
     if (hasPositions && hasVelocities) {

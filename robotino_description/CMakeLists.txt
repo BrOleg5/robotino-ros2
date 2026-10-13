@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.20)
 
 # source: https://github.com/MarcTestier/ros2_cmake_test/blob/master/foo/CMakeLists.txt
 file(READ ${CMAKE_CURRENT_SOURCE_DIR}/package.xml package_xml_str)
@@ -15,15 +15,8 @@ project(${PACKAGE_NAME} VERSION ${PACKAGE_VERSION})
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
-find_package(xacro REQUIRED)
 
-xacro_add_files(
-  urdf/robotino.urdf.xacro
-  TARGET xacro_target
-  INSTALL DESTINATION urdf
-)
-
-install(DIRECTORY launch meshes rviz
+install(DIRECTORY launch meshes rviz urdf
   DESTINATION share/${PROJECT_NAME}
 )
 

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.20)
 
 # source: https://github.com/MarcTestier/ros2_cmake_test/blob/master/foo/CMakeLists.txt
 file(READ ${CMAKE_CURRENT_SOURCE_DIR}/package.xml package_xml_str)
@@ -14,9 +14,9 @@ message(STATUS "Package name: ${PACKAGE_NAME}\nPackage version: ${PACKAGE_VERSIO
 
 project(${PACKAGE_NAME} VERSION ${PACKAGE_VERSION})
 
-# Default to C++14
 if(NOT CMAKE_CXX_STANDARD)
-  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD 20)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -31,6 +31,7 @@ find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(RobotinoAPI2 REQUIRED)
@@ -49,15 +50,27 @@ add_executable(
   src/LaserRangeFinderROS.cpp
   src/OdometryROS.cpp)
 
-target_link_libraries(robotino_node ${REC_ROBOTINO_API2_LIBRARY})
+target_link_libraries(
+  robotino_node
+  ${REC_ROBOTINO_API2_LIBRARY}
+  rclcpp::rclcpp
+  tf2::tf2
+  tf2_ros::tf2_ros
+  tf2_geometry_msgs::tf2_geometry_msgs
+  ${std_msgs_TARGETS}
+  ${sensor_msgs_TARGETS}
+  ${nav_msgs_TARGETS}
+  ${geometry_msgs_TARGETS}
+  ${builtin_interfaces_TARGETS}
+  ${rto_msgs_TARGETS}
+)
 
 target_include_directories(
   robotino_node PUBLIC
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME}>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+  ${ROBOTINOAPI2_INCLUDE_DIR}
 )
-
-ament_target_dependencies(robotino_node rclcpp rto_msgs std_msgs geometry_msgs sensor_msgs tf2 tf2_ros nav_msgs builtin_interfaces) 
 
 add_executable(
   robotino_camera_node
@@ -66,15 +79,19 @@ add_executable(
   src/ComROS.cpp
   src/CameraROS.cpp)
 
-target_link_libraries(robotino_camera_node ${REC_ROBOTINO_API2_LIBRARY})
+target_link_libraries(
+  robotino_camera_node
+  ${REC_ROBOTINO_API2_LIBRARY}
+  rclcpp::rclcpp
+  ${sensor_msgs_TARGETS}
+)
 
 target_include_directories(
   robotino_camera_node PUBLIC
   $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME}>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+  ${ROBOTINOAPI2_INCLUDE_DIR}
 )
-
-ament_target_dependencies(robotino_camera_node rclcpp sensor_msgs)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

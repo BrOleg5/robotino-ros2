@@ -14,7 +14,11 @@
 #include "rto_msgs/srv/reset_odometry.hpp"
 
 #include "rclcpp/rclcpp.hpp"
+#if __has_include("tf2_ros/transform_broadcaster.hpp")
+#include "tf2_ros/transform_broadcaster.hpp"
+#else
 #include "tf2_ros/transform_broadcaster.h"
+#endif
 
 #include "nav_msgs/msg/odometry.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
