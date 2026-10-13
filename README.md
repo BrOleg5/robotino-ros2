@@ -84,6 +84,21 @@ The dev container gets the host's `/dev/input`, so gamepads connected to the hos
 it, including ones plugged in after the container start. The container user needs read access to
 `/dev/input/event*` on the host; if the gamepad is not found, check the permissions of its device.
 
+### Battery, gyroscope and shutdown
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `/robotino/battery_state` | `sensor_msgs/BatteryState` | Battery voltage and current consumed by the robot (negative). `power_supply_status` is `CHARGING` while the external power supply is plugged in, `DISCHARGING` otherwise. Charge and percentage are not reported |
+| `/robotino/battery_low` | `std_msgs/Bool` | Low battery warning: Robotino shuts down soon. Published on change with transient local durability |
+| `/robotino/imu` | `sensor_msgs/Imu` | Yaw and yaw rate of the gyroscope in `base_link`. Linear acceleration is not provided |
+| `/robotino/joint_states` | `sensor_msgs/JointState` | Wheel positions, velocities and motor currents in A (in `effort`) |
+| `/robotino/shutdown` | `std_srvs/Trigger` (service) | Shuts down the Robotino computer |
+
+To shut down the robot:
+```bash
+ros2 service call /robotino/shutdown std_srvs/srv/Trigger
+```
+
 ### I/O interface
 
 `robotino_node` exposes the [I/O interface](https://ip.festo-didactic.com/Infoportal/Robotino/Hardware/Interfaces/EN/IOInterface.html)

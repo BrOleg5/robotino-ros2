@@ -23,6 +23,7 @@ MotorArrayROS::MotorArrayROS(rclcpp::Node* parent_node_ptr) : joint_state_msg_()
     joint_state_msg_.name.resize(3);
     joint_state_msg_.position.resize(3, 0.0);
     joint_state_msg_.velocity.resize(3, 0.0);
+    joint_state_msg_.effort.resize(3, 0.0);
     for (size_t i = 0; i < joint_state_msg_.name.size(); i++) {
         joint_state_msg_.name[i] = "wheel" + std::to_string(i) + "_joint";
     }
@@ -58,5 +59,12 @@ void MotorArrayROS::positionsChangedEvent(const int* positions, unsigned int siz
     hasPositions = true;
     if (hasPositions && hasVelocities) {
         publish();
+    }
+}
+
+// Motor currents are published as joint efforts in A; the last received values go out with positions and velocities
+void MotorArrayROS::currentsChangedEvent(const float* currents, unsigned int size) {
+    for (size_t i = 0; i < std::min<size_t>(size, joint_state_msg_.effort.size()); i++) {
+        joint_state_msg_.effort[i] = static_cast<double>(currents[i]);
     }
 }
