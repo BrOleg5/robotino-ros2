@@ -1,0 +1,97 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!-- Gazebo Harmonic (ROS 2 Jazzy) reads gz_frame_id, newer releases read frame_id -->
+  <xacro:property name="sensor_frame_tag"
+                  value="${'gz_frame_id' if '$(optenv ROS_DISTRO lyrical)' == 'jazzy' else 'frame_id'}"/>
+  <xacro:macro name="sensor_frame_id" params="frame">
+    <xacro:element xacro:name="${sensor_frame_tag}">${frame}</xacro:element>
+  </xacro:macro>
+
+  <!-- gz-sim sensors attached to the frames defined in robotino_description.
+       Raw gz topics live under robotino/sim/ and are converted to robotino_node
+       compatible ROS topics by ros_gz_bridge and sim_adapter.py. -->
+
+  <!-- Hokuyo URG-04LX-UG01: 240 deg field of view, 1024 steps per revolution (0.352 deg),
+       measuring steps 44..725 with step 384 straight ahead, 20..5600 mm, 100 ms per scan
+       (URG Series Communication Protocol Specification SCIP 2.0, C-42-03320B, PP command).
+       Accuracy is +-30 mm up to 1 m and +-3 % beyond, approximated by constant noise. -->
+  <xacro:macro name="laser_range_finder_sim" params="frame:=laser_link">
+    <xacro:property name="laser_step" value="${2*pi/1024}"/>
+    <gazebo reference="${frame}">
+      <sensor name="laser" type="gpu_lidar">
+        <always_on>true</always_on>
+        <update_rate>10</update_rate>
+        <topic>robotino/sim/scan</topic>
+        <xacro:sensor_frame_id frame="${frame}"/>
+        <lidar>
+          <scan>
+            <horizontal>
+              <samples>${725 - 44 + 1}</samples>
+              <resolution>1</resolution>
+              <min_angle>${(44 - 384) * laser_step}</min_angle>
+              <max_angle>${(725 - 384) * laser_step}</max_angle>
+            </horizontal>
+          </scan>
+          <range>
+            <min>0.02</min>
+            <max>5.6</max>
+            <resolution>0.001</resolution>
+          </range>
+          <noise>
+            <type>gaussian</type>
+            <mean>0.0</mean>
+            <stddev>0.01</stddev>
+          </noise>
+        </lidar>
+      </sensor>
+    </gazebo>
+  </xacro:macro>
+
+  <!-- Infrared distance sensors ir0..ir<last_index>: Sharp GP2Y0A41SK0F, 4..30 cm, nine sensors
+       40 deg apart around the base (Festo Robotino 3 InfoPortal, Sharp datasheet). The beam width
+       is not specified, so each sensor is a narrow fan of rays; sim_adapter.py converts every scan
+       to sensor_msgs/Range. -->
+  <xacro:macro name="ir_sensors_sim" params="last_index fov:=0.2 min_range:=0.04 max_range:=0.30">
+    <gazebo reference="ir${last_index}">
+      <sensor name="ir${last_index}" type="gpu_lidar">
+        <always_on>true</always_on>
+        <update_rate>20</update_rate>
+        <topic>robotino/sim/ir${last_index}</topic>
+        <xacro:sensor_frame_id frame="ir${last_index}"/>
+        <lidar>
+          <scan>
+            <horizontal>
+              <samples>5</samples>
+              <resolution>1</resolution>
+              <min_angle>${-fov/2}</min_angle>
+              <max_angle>${fov/2}</max_angle>
+            </horizontal>
+          </scan>
+          <range>
+            <min>${min_range}</min>
+            <max>${max_range}</max>
+            <resolution>0.001</resolution>
+          </range>
+        </lidar>
+      </sensor>
+    </gazebo>
+    <xacro:if value="${last_index > 0}">
+      <xacro:ir_sensors_sim last_index="${last_index - 1}" fov="${fov}"
+                            min_range="${min_range}" max_range="${max_range}"/>
+    </xacro:if>
+  </xacro:macro>
+
+  <!-- Bumper: contact sensor on the base cylinder collision (it never touches the ground) -->
+  <xacro:macro name="bumper_sim">
+    <gazebo reference="base_link">
+      <sensor name="bumper" type="contact">
+        <always_on>true</always_on>
+        <update_rate>50</update_rate>
+        <contact>
+          <collision>base_link_collision</collision>
+          <topic>robotino/sim/bumper</topic>
+        </contact>
+      </sensor>
+    </gazebo>
+  </xacro:macro>
+</robot>

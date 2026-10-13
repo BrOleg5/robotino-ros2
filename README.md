@@ -53,3 +53,36 @@ On Ubuntu 26.04 with ROS 2 Lyrical (or Ubuntu 24.04 with ROS 2 Jazzy):
 - **Note:** The robotino teleop package was not ported fully. To use keyboard teleop, run
   `ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=/robotino/cmd_vel`
   (`teleop_twist_keyboard` is preinstalled in the dev container).
+
+## Simulation in Gazebo
+
+The `robotino_gazebo` package simulates Robotino in Gazebo (gz-sim) with ros2_control.
+The simulated robot exposes the same topics and frames as `robotino_node`, so the rest of the stack
+works with the simulation and the real robot alike.
+
+- Start the simulation:
+  `ros2 launch robotino_gazebo gazebo_sim.launch.py robot_model:=robotino4`
+  - `world:=robotino_test`: a room with obstacles; the default `empty` is an empty world.
+    A path to any gz-sim `.sdf` world file is accepted too
+  - `gui:=false` runs Gazebo headless, `rviz:=false` disables RViz
+  - `x:=`, `y:=`, `yaw:=` set the spawn pose
+- Drive the robot:
+  `ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=/robotino/cmd_vel`
+
+Wheels are velocity controlled by `omni_wheel_drive_controller`, which also computes the wheel odometry.
+The omniwheel rollers are modeled by anisotropic friction: wheels grip only in the rolling direction.
+
+| Topic | Type | Description |
+| --- | --- | --- |
+| `/robotino/cmd_vel` | `geometry_msgs/Twist` | Velocity command |
+| `/robotino/odom` | `nav_msgs/Odometry` | Wheel odometry, also published as TF `odom` → `base_link` |
+| `/joint_states` | `sensor_msgs/JointState` | Wheel joints |
+| `/laser_scan` | `sensor_msgs/LaserScan` | Hokuyo laser range finder |
+| `/robotino/ir0` … `/robotino/ir8` | `sensor_msgs/Range` | Infrared distance sensors |
+| `/robotino/bumper` | `std_msgs/Bool` | Bumper contact |
+| `/image_raw`, `/camera_info` | `sensor_msgs/Image`, `sensor_msgs/CameraInfo` | RGB camera |
+
+The camera is a generic RGB camera (`generic_camera` macro in
+[robotino_gazebo/urdf/generic_camera.urdf.xacro](robotino_gazebo/urdf/generic_camera.urdf.xacro)):
+its resolution, field of view, frame rate and noise are macro parameters set in
+[robotino_sim.urdf.xacro](robotino_gazebo/urdf/robotino_sim.urdf.xacro).

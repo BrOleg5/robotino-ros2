@@ -1,0 +1,236 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+    Splitter Ratio: 0.5
+    Tree Height: 400
+  - Class: rviz_common/Views
+    Name: Views
+    Splitter Ratio: 0.5
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Alpha: 0.5
+      Cell Size: 1
+      Class: rviz_default_plugins/Grid
+      Color: 160; 160; 164
+      Enabled: true
+      Name: Grid
+      Plane: XY
+      Plane Cell Count: 20
+      Reference Frame: <Fixed Frame>
+      Value: true
+    - Alpha: 1
+      Class: rviz_default_plugins/RobotModel
+      Description Source: Topic
+      Description Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /robot_description
+      Enabled: true
+      Name: RobotModel
+      Value: true
+      Visual Enabled: true
+    - Class: rviz_default_plugins/TF
+      Enabled: false
+      Name: TF
+      Show Names: false
+      Value: false
+    - Alpha: 1
+      Class: rviz_default_plugins/LaserScan
+      Color: 255; 50; 50
+      Color Transformer: FlatColor
+      Enabled: true
+      Name: LaserScan
+      Size (m): 0.03
+      Style: Flat Squares
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /laser_scan
+      Value: true
+    - Angle Tolerance: 0.1
+      Class: rviz_default_plugins/Odometry
+      Covariance:
+        Value: false
+      Enabled: true
+      Keep: 50
+      Name: Odometry
+      Position Tolerance: 0.1
+      Shape:
+        Value: Arrow
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /robotino/odom
+      Value: true
+    - Class: rviz_common/Group
+      Enabled: true
+      Name: IR sensors
+      Displays:
+        - Alpha: 0.5
+          Buffer Length: 1
+          Class: rviz_default_plugins/Range
+          Color: 50; 200; 255
+          Enabled: true
+          Name: ir0
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /robotino/ir0
+          Value: true
+        - Alpha: 0.5
+          Buffer Length: 1
+          Class: rviz_default_plugins/Range
+          Color: 50; 200; 255
+          Enabled: true
+          Name: ir1
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /robotino/ir1
+          Value: true
+        - Alpha: 0.5
+          Buffer Length: 1
+          Class: rviz_default_plugins/Range
+          Color: 50; 200; 255
+          Enabled: true
+          Name: ir2
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /robotino/ir2
+          Value: true
+        - Alpha: 0.5
+          Buffer Length: 1
+          Class: rviz_default_plugins/Range
+          Color: 50; 200; 255
+          Enabled: true
+          Name: ir3
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /robotino/ir3
+          Value: true
+        - Alpha: 0.5
+          Buffer Length: 1
+          Class: rviz_default_plugins/Range
+          Color: 50; 200; 255
+          Enabled: true
+          Name: ir4
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /robotino/ir4
+          Value: true
+        - Alpha: 0.5
+          Buffer Length: 1
+          Class: rviz_default_plugins/Range
+          Color: 50; 200; 255
+          Enabled: true
+          Name: ir5
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /robotino/ir5
+          Value: true
+        - Alpha: 0.5
+          Buffer Length: 1
+          Class: rviz_default_plugins/Range
+          Color: 50; 200; 255
+          Enabled: true
+          Name: ir6
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /robotino/ir6
+          Value: true
+        - Alpha: 0.5
+          Buffer Length: 1
+          Class: rviz_default_plugins/Range
+          Color: 50; 200; 255
+          Enabled: true
+          Name: ir7
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /robotino/ir7
+          Value: true
+        - Alpha: 0.5
+          Buffer Length: 1
+          Class: rviz_default_plugins/Range
+          Color: 50; 200; 255
+          Enabled: true
+          Name: ir8
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /robotino/ir8
+          Value: true
+    - Class: rviz_default_plugins/Image
+      Enabled: true
+      Name: Camera
+      Normalize Range: true
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Best Effort
+        Value: /image_raw
+      Value: true
+  Enabled: true
+  Global Options:
+    Background Color: 48; 48; 48
+    Fixed Frame: odom
+    Frame Rate: 30
+  Name: root
+  Tools:
+    - Class: rviz_default_plugins/Interact
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+    - Class: rviz_default_plugins/FocusCamera
+    - Class: rviz_default_plugins/Measure
+  Transformation:
+    Current:
+      Class: rviz_default_plugins/TF
+  Value: true
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 6
+      Focal Point:
+        X: 0
+        Y: 0
+        Z: 0
+      Name: Current View
+      Pitch: 0.8
+      Target Frame: base_link
+      Value: Orbit (rviz)
+      Yaw: 3.6
+    Saved: ~
+Window Geometry:
+  Height: 900
+  Width: 1400

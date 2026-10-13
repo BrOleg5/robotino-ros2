@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!-- Requires the sensor_frame_id macro from robotino_sensors.urdf.xacro -->
+  <!-- Generic RGB camera for gz-sim. The sensor looks along +x of ${name}_frame,
+       images are stamped with ${name}_optical_frame (z forward, x right, y down). -->
+  <xacro:macro name="generic_camera"
+               params="name parent *origin width:=640 height:=480 hfov:=1.0472 fps:=30
+                       near:=0.05 far:=20.0 format:=R8G8B8 noise_stddev:=0.007 topic:=robotino/sim/camera">
+    <link name="${name}_frame"/>
+    <joint name="${name}_frame_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child link="${name}_frame"/>
+      <xacro:insert_block name="origin"/>
+    </joint>
+
+    <link name="${name}_optical_frame"/>
+    <joint name="${name}_optical_joint" type="fixed">
+      <parent link="${name}_frame"/>
+      <child link="${name}_optical_frame"/>
+      <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}"/>
+    </joint>
+
+    <gazebo reference="${name}_frame">
+      <sensor name="${name}" type="camera">
+        <always_on>true</always_on>
+        <update_rate>${fps}</update_rate>
+        <topic>${topic}/image</topic>
+        <xacro:sensor_frame_id frame="${name}_optical_frame"/>
+        <camera>
+          <camera_info_topic>${topic}/camera_info</camera_info_topic>
+          <horizontal_fov>${hfov}</horizontal_fov>
+          <image>
+            <width>${width}</width>
+            <height>${height}</height>
+            <format>${format}</format>
+          </image>
+          <clip>
+            <near>${near}</near>
+            <far>${far}</far>
+          </clip>
+          <noise>
+            <type>gaussian</type>
+            <mean>0.0</mean>
+            <stddev>${noise_stddev}</stddev>
+          </noise>
+        </camera>
+      </sensor>
+    </gazebo>
+  </xacro:macro>
+</robot>

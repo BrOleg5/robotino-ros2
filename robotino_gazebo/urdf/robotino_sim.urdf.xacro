@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<!-- Robotino model from robotino_description extended with gz-sim specific parts:
+     ros2_control wheels, omniwheel friction and sensors. -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="robotino">
+  <xacro:arg name="robot_model" default="robotino4"/>
+  <xacro:arg name="controllers_file" default=""/>
+  <xacro:property name="robot_model" value="$(arg robot_model)"/>
+
+  <xacro:include filename="$(find robotino_description)/urdf/$(arg robot_model).urdf.xacro"/>
+  <xacro:include filename="robotino_ros2_control.urdf.xacro"/>
+  <xacro:include filename="robotino_sensors.urdf.xacro"/>
+  <xacro:include filename="generic_camera.urdf.xacro"/>
+
+  <xacro:robotino_ros2_control controllers_file="$(arg controllers_file)"/>
+
+  <xacro:laser_range_finder_sim/>
+  <xacro:ir_sensors_sim last_index="8"/>
+  <xacro:bumper_sim/>
+
+  <!-- Robotino 3: Logitech C920 camera_link; Robotino 4: RealSense D435 camera_link,
+       the RGB module is shifted by 15 mm to the left -->
+  <xacro:if value="${robot_model.startswith('robotino4')}">
+    <xacro:generic_camera name="rgb_camera" parent="camera_link" hfov="${radians(69)}" fps="30">
+      <origin xyz="0 0.015 0" rpy="0 0 0"/>
+    </xacro:generic_camera>
+  </xacro:if>
+  <xacro:if value="${robot_model.startswith('robotino3')}">
+    <xacro:generic_camera name="rgb_camera" parent="camera_link" hfov="${radians(70.4)}" fps="30">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </xacro:generic_camera>
+  </xacro:if>
+</robot>

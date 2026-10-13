@@ -13,7 +13,10 @@ ENV DEBIAN_FRONTEND=noninteractive
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Development tools and ROS packages used by this repository.
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# The base image may lag behind the ROS apt repository: upgrade it first, otherwise newly installed
+# packages (e.g. ros_gz, gz_ros2_control) fail with undefined symbols of older installed libraries.
+RUN apt-get update && apt-get full-upgrade -y \
+    && apt-get install -y --no-install-recommends \
         build-essential \
         clang-format \
         cmake \
@@ -25,12 +28,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         ros-dev-tools \
         sudo \
         wget \
+        ros-${ROS_DISTRO}-controller-manager \
+        ros-${ROS_DISTRO}-gz-ros2-control \
         ros-${ROS_DISTRO}-image-transport-plugins \
+        ros-${ROS_DISTRO}-joint-state-broadcaster \
         ros-${ROS_DISTRO}-joint-state-publisher \
         ros-${ROS_DISTRO}-joint-state-publisher-gui \
+        ros-${ROS_DISTRO}-omni-wheel-drive-controller \
         ros-${ROS_DISTRO}-realsense2-camera-msgs \
         ros-${ROS_DISTRO}-realsense2-description \
         ros-${ROS_DISTRO}-robot-state-publisher \
+        ros-${ROS_DISTRO}-ros-gz \
+        ros-${ROS_DISTRO}-ros2controlcli \
         ros-${ROS_DISTRO}-teleop-twist-keyboard \
         ros-${ROS_DISTRO}-xacro \
     && rm -rf /var/lib/apt/lists/*

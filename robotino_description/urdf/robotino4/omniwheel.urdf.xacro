@@ -3,19 +3,22 @@
   <xacro:macro name="omniwheel" params="name angle parent">
     <xacro:property name="wheel_radius" value="0.0625"/>
     <xacro:property name="wheel_thickness" value="0.043"/>
+    <xacro:property name="wheel_collision_thickness" value="0.004"/>
     <xacro:property name="wheel_mass" value="0.315"/>
     <xacro:property name="wheel_distance" value="0.1911"/>
     <link name="${name}_link">
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="package://robotino_description/meshes/robotino4/omniwheel_rotacaster_r2_1258_85.dae" scale="1 1 1"/>
+          <mesh filename="file://$(find robotino_description)/meshes/robotino4/omniwheel_rotacaster_r2_1258_85.dae" scale="1 1 1"/>
         </geometry>
       </visual>
+      <!-- Physics engines put cylinder contacts on its rims, so a thin disk is used to keep
+           the ground contact close to the wheel mid-plane, like the rollers of a real omniwheel -->
       <collision>
         <origin xyz="0 0 0" rpy="0 ${radians(90)} 0"/>
         <geometry>
-          <cylinder length="${wheel_thickness}" radius="${wheel_radius}"/>
+          <cylinder length="${wheel_collision_thickness}" radius="${wheel_radius}"/>
         </geometry>
       </collision>
       <inertial>
@@ -30,7 +33,7 @@
       <parent link="${parent}"/>
       <child link="${name}_link"/>
       <origin xyz="${wheel_distance * cos(angle)} ${wheel_distance * sin(angle)} ${wheel_radius}" rpy="0 0 ${angle}"/>
-      <axis xyz="-1 0 0" rpy="0 0 0"/>	
+      <axis xyz="1 0 0" rpy="0 0 0"/>	
     </joint>
   </xacro:macro>
 </robot>
