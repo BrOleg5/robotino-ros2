@@ -3,6 +3,7 @@
   <xacro:macro name="omniwheel" params="name angle parent">
     <xacro:property name="wheel_radius" value="0.0625"/>
     <xacro:property name="wheel_thickness" value="0.062"/>
+    <xacro:property name="wheel_collision_thickness" value="0.004"/>
     <xacro:property name="wheel_mass" value="0.485"/>
     <xacro:property name="wheel_distance" value="0.1811"/>
     <link name="${name}_link">
@@ -12,10 +13,12 @@
           <mesh filename="file://$(find robotino_description)/meshes/robotino3/omniwheel_rotacaster_r3_1258_85.dae" scale="0.01 0.01 0.01"/>
         </geometry>
       </visual>
+      <!-- Physics engines put cylinder contacts on its rims, so a thin disk is used to keep
+           the ground contact close to the wheel mid-plane, like the rollers of a real omniwheel -->
       <collision>
         <origin xyz="0 0 0" rpy="${radians(90)} 0 0"/>
         <geometry>
-          <cylinder length="${wheel_thickness}" radius="${wheel_radius}"/>
+          <cylinder length="${wheel_collision_thickness}" radius="${wheel_radius}"/>
         </geometry>
       </collision>
       <inertial>
