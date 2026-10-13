@@ -91,7 +91,7 @@ it, including ones plugged in after the container start. The container user need
 | `/robotino/battery_state` | `sensor_msgs/BatteryState` | Battery voltage and current consumed by the robot (negative). `power_supply_status` is `CHARGING` while the external power supply is plugged in, `DISCHARGING` otherwise. Charge and percentage are not reported |
 | `/robotino/battery_low` | `std_msgs/Bool` | Low battery warning: Robotino shuts down soon. Published on change with transient local durability |
 | `/robotino/imu` | `sensor_msgs/Imu` | Yaw and yaw rate of the gyroscope in `base_link`. Linear acceleration is not provided |
-| `/robotino/joint_states` | `sensor_msgs/JointState` | Wheel positions, velocities and motor currents in A (in `effort`) |
+| `/robotino/joint_states` | `sensor_msgs/JointState` | Wheel positions, velocities and torques. Torque in N·m is estimated from the motor current, without gearbox losses |
 | `/robotino/shutdown` | `std_srvs/Trigger` (service) | Shuts down the Robotino computer |
 
 To shut down the robot:

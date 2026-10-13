@@ -33,6 +33,11 @@ MotorArrayROS::MotorArrayROS(rclcpp::Node* parent_node_ptr) : joint_state_msg_()
     // software encoder resolution = hardware encoder resolution * (front edge + back edge)  * number of channels =
     // = 500 * 2 * 2 = 2000
     encoderResolutionPPR = 2000.0;
+
+    // Torque constant of the 24 V Dunkermotoren GR 42x40 from its datasheet:
+    // starting torque / (starting current - no load current) = 0.33 N*m / (5.68 A - 0.18 A) = 0.060 N*m/A,
+    // continuous rated torque / (continuous current - no load current) = 0.057 N*m / (1.2 A - 0.18 A) = 0.056 N*m/A
+    motorTorqueConstant = 0.058;
 }
 
 // Positive motor speed of Robotino API2 drives the robot anti-clockwise around its center,
@@ -62,9 +67,11 @@ void MotorArrayROS::positionsChangedEvent(const int* positions, unsigned int siz
     }
 }
 
-// Motor currents are published as joint efforts in A; the last received values go out with positions and velocities
+// Effort is the wheel torque estimated from the motor current, gearbox losses are neglected.
+// The last received values go out with positions and velocities.
 void MotorArrayROS::currentsChangedEvent(const float* currents, unsigned int size) {
     for (size_t i = 0; i < std::min<size_t>(size, joint_state_msg_.effort.size()); i++) {
-        joint_state_msg_.effort[i] = static_cast<double>(currents[i]);
+        // conversion from A to N*m
+        joint_state_msg_.effort[i] = -motorTorqueConstant * gearRatio * static_cast<double>(currents[i]);
     }
 }
