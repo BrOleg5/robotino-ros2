@@ -84,6 +84,31 @@ The dev container gets the host's `/dev/input`, so gamepads connected to the hos
 it, including ones plugged in after the container start. The container user needs read access to
 `/dev/input/event*` on the host; if the gamepad is not found, check the permissions of its device.
 
+### I/O interface
+
+`robotino_node` exposes the [I/O interface](https://ip.festo-didactic.com/Infoportal/Robotino/Hardware/Interfaces/EN/IOInterface.html)
+with `control_msgs/msg/DynamicInterfaceGroupValues`, the message type of `gpio_controllers/GpioCommandController`:
+
+| Topic | Description |
+| --- | --- |
+| `/robotino/gpio_states` | States of all channels, published when any of them changes |
+| `/robotino/gpio_commands` | Commands for digital outputs and relays |
+
+| Group | Channels | Values | Access |
+| --- | --- | --- | --- |
+| `digital_inputs` | `DI1` … `DI8` | 0.0 / 1.0 | read |
+| `analog_inputs` | `AI1` … `AI8` | 0–10 V | read |
+| `digital_outputs` | `DQ1` … `DQ8` | 0.0 / 1.0 | read / write |
+| `relays` | `R1`, `R2` | 0.0 / 1.0 | read / write |
+
+A command may contain only some groups and channels; the other channels keep their last commanded value
+(0.0 after the node start). For example, to switch on digital output 1 and relay 2:
+```bash
+ros2 topic pub --once /robotino/gpio_commands control_msgs/msg/DynamicInterfaceGroupValues \
+  "{interface_groups: [digital_outputs, relays],
+    interface_values: [{interface_names: [DQ1], values: [1.0]}, {interface_names: [R2], values: [1.0]}]}"
+```
+
 ## Simulation in Gazebo
 
 The `robotino_gazebo` package simulates Robotino in Gazebo (gz-sim) with ros2_control.

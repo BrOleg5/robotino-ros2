@@ -16,6 +16,7 @@ RobotinoNode::RobotinoNode()
       bumper_(this),
       com_(this),
       distance_sensor_array_(this),
+      io_interface_(this),
       motor_array_(this),
       omni_drive_(this),
       laser_range_finder_(this),
@@ -35,13 +36,19 @@ RobotinoNode::RobotinoNode()
     odometry_.reset();
 
     auto timer_period = std::chrono::milliseconds(this->get_parameter("timer_period_ms").as_int());
-    timer_ = this->create_wall_timer(timer_period, std::bind(&ComROS::processEvents, &com_));
+    timer_ = this->create_wall_timer(timer_period, std::bind(&RobotinoNode::timerCallback, this));
 }
 
 void RobotinoNode::initModules() {
     bumper_.setComId(com_.id());
     distance_sensor_array_.setComId(com_.id());
+    io_interface_.setComId(com_.id());
     omni_drive_.setComId(com_.id());
     omni_drive_.setSpeedLimit(this->get_parameter("max_linear_vel").as_double(),
                               this->get_parameter("max_angular_vel").as_double());
+}
+
+void RobotinoNode::timerCallback() {
+    com_.processEvents();
+    io_interface_.publishState();
 }
