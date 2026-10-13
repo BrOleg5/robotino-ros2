@@ -30,7 +30,7 @@
       <parent link="${parent}"/>
       <child link="${name}_link"/>
       <origin xyz="${wheel_distance * cos(angle)} ${wheel_distance * sin(angle)} ${wheel_radius}" rpy="0 0 ${angle}"/>
-      <axis xyz="-1 0 0" rpy="0 0 0"/>	
+      <axis xyz="1 0 0" rpy="0 0 0"/>	
     </joint>
   </xacro:macro>
 </robot>
