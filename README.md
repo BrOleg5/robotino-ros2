@@ -88,7 +88,7 @@ it, including ones plugged in after the container start. The container user need
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `/robotino/battery_state` | `sensor_msgs/BatteryState` | Battery voltage and current consumed by the robot (negative). `power_supply_status` is `CHARGING` while the external power supply is plugged in, `DISCHARGING` otherwise. Charge and percentage are not reported |
+| `/robotino/battery_state` | `sensor_msgs/BatteryState` | Battery voltage and current consumed by the robot (negative). `power_supply_status` is `CHARGING` while the external power supply is plugged in, `DISCHARGING` otherwise. `power_supply_technology` is derived from the battery type reported by Robotino: `LION` for the Festool batteries of Robotino 4, `NIMH`, or `UNKNOWN` for lead-acid ones. Charge and percentage are not reported |
 | `/robotino/battery_low` | `std_msgs/Bool` | Low battery warning: Robotino shuts down soon. Published on change with transient local durability |
 | `/robotino/imu` | `sensor_msgs/Imu` | Yaw and yaw rate of the gyroscope in `base_link`. Linear acceleration is not provided |
 | `/robotino/joint_states` | `sensor_msgs/JointState` | Wheel positions, velocities and torques. Torque in N·m is estimated from the motor current, without gearbox losses |

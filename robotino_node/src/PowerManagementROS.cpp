@@ -5,12 +5,34 @@
  *      Author: BrOleg5
  */
 
+#include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <string>
 
 #include "PowerManagementROS.h"
 
 using BatteryState = sensor_msgs::msg::BatteryState;
+
+// Robotino 4 is supplied by Festool lithium-ion batteries, Robotino 3 by lead-acid or NiMH ones.
+// The battery type strings of Robotino API2 are not documented, so they are matched loosely;
+// lead-acid has no technology constant in BatteryState and stays unknown.
+static uint8_t technologyFromType(std::string type) {
+    std::transform(type.begin(), type.end(), type.begin(), [](unsigned char c) { return std::tolower(c); });
+    if (type.find("nimh") != std::string::npos) {
+        return BatteryState::POWER_SUPPLY_TECHNOLOGY_NIMH;
+    }
+    if (type.find("lipo") != std::string::npos) {
+        return BatteryState::POWER_SUPPLY_TECHNOLOGY_LIPO;
+    }
+    if (type.find("life") != std::string::npos) {
+        return BatteryState::POWER_SUPPLY_TECHNOLOGY_LIFE;
+    }
+    if (type.find("li") != std::string::npos || type.find("festool") != std::string::npos) {
+        return BatteryState::POWER_SUPPLY_TECHNOLOGY_LION;
+    }
+    return BatteryState::POWER_SUPPLY_TECHNOLOGY_UNKNOWN;
+}
 
 PowerManagementROS::PowerManagementROS(rclcpp::Node* parent_node_ptr)
     : logger_(parent_node_ptr->get_logger()), battery_state_msg_(), battery_low_msg_(), has_readings_(false) {
@@ -36,6 +58,11 @@ PowerManagementROS::PowerManagementROS(rclcpp::Node* parent_node_ptr)
 void PowerManagementROS::readingsEvent(float battery_voltage, float system_current, bool ext_power,
                                        int /*num_chargers*/, const char* batteryType, bool batteryLow,
                                        int batteryLowShutdownCounter) {
+    if (!has_readings_) {
+        RCLCPP_INFO(logger_, "Battery type: %s", batteryType);
+        battery_state_msg_.power_supply_technology = technologyFromType(batteryType);
+    }
+
     battery_state_msg_.header.stamp = clock_ptr_->now();
     battery_state_msg_.voltage = battery_voltage;
     // Current consumed by the robot, negative as the battery is discharging
@@ -45,9 +72,6 @@ void PowerManagementROS::readingsEvent(float battery_voltage, float system_curre
                                                        : BatteryState::POWER_SUPPLY_STATUS_DISCHARGING;
     battery_state_pub_->publish(battery_state_msg_);
 
-    if (!has_readings_) {
-        RCLCPP_INFO(logger_, "Battery type: %s", batteryType);
-    }
     if (!has_readings_ || batteryLow != battery_low_msg_.data) {
         if (batteryLow) {
             RCLCPP_WARN(logger_, "Battery low (%.1f V), Robotino shuts down in %d s", battery_voltage,
