@@ -18,6 +18,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/image.hpp"
 #include "sensor_msgs/msg/camera_info.hpp"
+#include "image_transport/camera_publisher.hpp"
 #include "camera_info_manager/camera_info_manager.hpp"
 
 class CameraROS : public rec::robotino::api2::Camera {
@@ -35,8 +36,8 @@ class CameraROS : public rec::robotino::api2::Camera {
   private:
     rclcpp::Logger logger_;
     rclcpp::Clock::SharedPtr clock_ptr_;
-    rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr image_pub_;
-    rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr caminfo_pub_;
+    // Publishes image_raw with all available transports (compressed, zstd, ...) and camera_info
+    image_transport::CameraPublisher camera_pub_;
     std::unique_ptr<camera_info_manager::CameraInfoManager> caminfo_manager_;
 
     sensor_msgs::msg::Image img_msg_;

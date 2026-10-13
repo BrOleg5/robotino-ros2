@@ -40,7 +40,8 @@ def launch_camera_node(context: LaunchContext, robot_model, camera_frame_id):
         Node(
             package='robotino_node',
             executable='robotino_camera_node',
-            name='camera',
+            name='robotino_camera',
+            namespace='camera',
             parameters=[{
                 'hostname': LaunchConfiguration('hostname'),
                 'frame_id': camera_frame_id_str,

@@ -10,19 +10,26 @@
 
 #include "CameraROS.h"
 #include "camera_info_manager/version.h"
+#include "image_transport/image_transport.hpp"
+#include "image_transport/version.h"
 #include "sensor_msgs/fill_image.hpp"
 
 CameraROS::CameraROS(rclcpp::Node* parent_node_ptr)
     : logger_(parent_node_ptr->get_logger()), img_msg_() {
-    image_pub_ = parent_node_ptr->create_publisher<sensor_msgs::msg::Image>("image_raw", 10);
-    caminfo_pub_ = parent_node_ptr->create_publisher<sensor_msgs::msg::CameraInfo>("camera_info", 10);
+    // image_transport and camera_info_manager 6.4 (Lyrical) deprecate rmw_qos_profile_t overloads
+#if IMAGE_TRANSPORT_VERSION_GTE(6, 4, 0)
+    camera_pub_ = image_transport::create_camera_publisher(*parent_node_ptr, "image_raw",
+                                                           rclcpp::SystemDefaultsQoS());
+#else
+    camera_pub_ = image_transport::create_camera_publisher(parent_node_ptr, "image_raw");
+#endif
     clock_ptr_ = parent_node_ptr->get_clock();
 
-    // camera_info_manager 6.4 (Lyrical) deprecates the rmw_qos_profile_t overload and adds rclcpp::QoS one
+    // Service ~/set_camera_info, as in Jazzy (Lyrical puts it into the root namespace by default)
 #if CAMERA_INFO_MANAGER_VERSION_GTE(6, 4, 0)
     caminfo_manager_ = std::make_unique<camera_info_manager::CameraInfoManager>(
         parent_node_ptr->get_node_base_interface(), parent_node_ptr->get_node_services_interface(),
-        parent_node_ptr->get_node_logging_interface(), "camera", "", rclcpp::SystemDefaultsQoS());
+        parent_node_ptr->get_node_logging_interface(), "camera", "", rclcpp::SystemDefaultsQoS(), "~");
 #else
     caminfo_manager_ = std::make_unique<camera_info_manager::CameraInfoManager>(
         parent_node_ptr->get_node_base_interface(), parent_node_ptr->get_node_services_interface(),
@@ -83,8 +90,7 @@ void CameraROS::imageReceivedEvent(const unsigned char* data,
     caminfo_msg.header = img_msg_.header;
 
     // Publish the Image & CameraInfo msgs
-    image_pub_->publish(img_msg_);
-    caminfo_pub_->publish(caminfo_msg);
+    camera_pub_.publish(img_msg_, caminfo_msg);
 }
 
 void CameraROS::settingsChangedEvent(unsigned int width, unsigned int height, const char* format) {

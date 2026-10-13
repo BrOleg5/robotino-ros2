@@ -61,9 +61,20 @@ On Ubuntu 26.04 with ROS 2 Lyrical (or Ubuntu 24.04 with ROS 2 Jazzy):
 
 ### Camera
 
-`robotino_camera_node` receives images of the Robotino camera via Robotino API2 and publishes
-`/image_raw` (`sensor_msgs/Image`, `rgb8`) and `/camera_info` (`sensor_msgs/CameraInfo`).
-Run it alone with `ros2 run robotino_node robotino_camera_node --ros-args -p hostname:=<robotino ip address>`.
+`robotino_camera_node` receives images of the Robotino camera via Robotino API2 and publishes them
+with `image_transport` in the `camera` namespace:
+
+| Topic / service | Type | Description |
+| --- | --- | --- |
+| `/camera/image_raw` | `sensor_msgs/Image` | Image, `rgb8` |
+| `/camera/image_raw/compressed`, `/zstd`, `/theora` | | The same image compressed by `image_transport` plugins, only when subscribed. Use them over Wi-Fi and for `ros2 bag` |
+| `/camera/camera_info` | `sensor_msgs/CameraInfo` | Calibration |
+| `/camera/robotino_camera/set_camera_info` | `sensor_msgs/SetCameraInfo` | Saves calibration to `camera_info_url` |
+
+The node keeps running while Robotino is unreachable and reconnects automatically,
+camera settings are applied again on every connection.
+Run it alone with
+`ros2 run robotino_node robotino_camera_node --ros-args -r __ns:=/camera -p hostname:=<robotino ip address>`.
 
 | Parameter | Default | Description |
 | --- | --- | --- |
@@ -76,10 +87,10 @@ Run it alone with `ros2 run robotino_node robotino_camera_node --ros-args -p hos
 | `camera_info_url` | `""` | Calibration file, empty means `~/.ros/camera_info/<camera_name>.yaml` |
 | `timer_period_ms` | `20` | Period of polling Robotino API2 events |
 
-Without calibration `/camera_info` contains only the image size. To calibrate, run
-`ros2 run camera_calibration cameracalibrator --size 8x6 --square 0.025 --ros-args -r image:=/image_raw -r camera/set_camera_info:=/set_camera_info`
+Without calibration `/camera/camera_info` contains only the image size. To calibrate, run
+`ros2 run camera_calibration cameracalibrator --size 8x6 --square 0.025 --ros-args -r image:=/camera/image_raw -r camera/set_camera_info:=/camera/robotino_camera/set_camera_info`
 (set `--size` and `--square` for your checkerboard)
-and press **Commit**: the calibration is saved via the `/set_camera_info` service to `camera_info_url`.
+and press **Commit**: the calibration is saved to `camera_info_url`.
 
 ## Simulation in Gazebo
 
@@ -107,7 +118,7 @@ The omniwheel rollers are modeled by anisotropic friction: wheels grip only in t
 | `/laser_scan` | `sensor_msgs/LaserScan` | Hokuyo laser range finder |
 | `/robotino/ir0` … `/robotino/ir8` | `sensor_msgs/Range` | Infrared distance sensors |
 | `/robotino/bumper` | `std_msgs/Bool` | Bumper contact |
-| `/image_raw`, `/camera_info` | `sensor_msgs/Image`, `sensor_msgs/CameraInfo` | RGB camera |
+| `/camera/image_raw`, `/camera/camera_info` | `sensor_msgs/Image`, `sensor_msgs/CameraInfo` | RGB camera, compressed transports as on the real robot |
 
 The camera is a generic RGB camera (`generic_camera` macro in
 [robotino_gazebo/urdf/generic_camera.urdf.xacro](robotino_gazebo/urdf/generic_camera.urdf.xacro)):

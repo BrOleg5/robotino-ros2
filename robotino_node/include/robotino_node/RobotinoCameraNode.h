@@ -24,9 +24,14 @@ class RobotinoCameraNode : public rclcpp::Node {
 
   private:
     rclcpp::TimerBase::SharedPtr timer_;
+    bool connected_ = false;
 
     ComROS com_;
     CameraROS camera_;
+
+    void timerCallback();
+    // Camera settings are applied on every (re)connection to Robotino
+    void applyCameraSettings();
 };
 
 #endif /* ROBOTINOCAMERANODE_H */

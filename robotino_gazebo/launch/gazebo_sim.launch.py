@@ -175,6 +175,14 @@ def generate_launch_description():
             }],
         ),
         Node(
+            package='ros_gz_image',
+            executable='image_bridge',
+            output='screen',
+            arguments=['robotino/sim/camera/image'],
+            remappings=[('robotino/sim/camera/image', '/camera/image_raw')],
+            parameters=[{'use_sim_time': True}],
+        ),
+        Node(
             package='robotino_gazebo',
             executable='sim_adapter.py',
             output='screen',

@@ -11,7 +11,7 @@
 
 #include "RobotinoCameraNode.h"
 
-RobotinoCameraNode::RobotinoCameraNode() : Node("camera"), com_(this), camera_(this) {
+RobotinoCameraNode::RobotinoCameraNode() : Node("robotino_camera"), com_(this), camera_(this) {
     this->declare_parameter("hostname", "192.168.0.1");
     this->declare_parameter("timer_period_ms", 20);
     this->declare_parameter("camera_number", 0);
@@ -27,19 +27,41 @@ RobotinoCameraNode::RobotinoCameraNode() : Node("camera"), com_(this), camera_(t
     camera_.configure(this->get_parameter("frame_id").as_string(),
                       this->get_parameter("camera_name").as_string(),
                       this->get_parameter("camera_info_url").as_string());
-
     camera_.setComId(com_.id());
+
+    // Non-blocking connection with automatic reconnection: the node keeps running while Robotino is unreachable
+    std::string hostname = this->get_parameter("hostname").as_string();
+    com_.setAddress(hostname.c_str());
+    com_.setAutoReconnectEnabled(true);
+    com_.connectToServer(false);
+    RCLCPP_INFO(this->get_logger(), "Connecting to Robotino with host IP %s", hostname.c_str());
+
+    auto timer_period = std::chrono::milliseconds(this->get_parameter("timer_period_ms").as_int());
+    timer_ = this->create_wall_timer(timer_period, std::bind(&RobotinoCameraNode::timerCallback, this));
+}
+
+void RobotinoCameraNode::timerCallback() {
+    // Com::processEvents() dispatches events of all API2 objects associated with com_, including camera_
+    com_.processEvents();
+
+    bool connected = com_.isConnected();
+    if (connected && !connected_) {
+        applyCameraSettings();
+    }
+    if (!connected) {
+        RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 10000,
+                             "Waiting for connection to Robotino with address %s", com_.address());
+    }
+    connected_ = connected;
+}
+
+void RobotinoCameraNode::applyCameraSettings() {
     int camera_number = this->get_parameter("camera_number").as_int();
     try {
         camera_.setCameraNumber(camera_number);
     } catch (const rec::robotino::api2::RobotinoException& e) {
         RCLCPP_ERROR(this->get_logger(), "Cannot select camera %d: %s", camera_number, e.what());
     }
-
-    std::string hostname = this->get_parameter("hostname").as_string();
-    com_.setAddress(hostname.c_str());
-    com_.connectToServer(true);
-    RCLCPP_INFO(this->get_logger(), "Connecting to Robotino with host IP %s\n", hostname.c_str());
 
     int image_width = this->get_parameter("image_width").as_int();
     int image_height = this->get_parameter("image_height").as_int();
@@ -52,8 +74,4 @@ RobotinoCameraNode::RobotinoCameraNode() : Node("camera"), com_(this), camera_(t
                          image_height, image_format.c_str(), e.what());
         }
     }
-
-    // Com::processEvents() dispatches events of all API2 objects associated with com_, including camera_
-    auto timer_period = std::chrono::milliseconds(this->get_parameter("timer_period_ms").as_int());
-    timer_ = this->create_wall_timer(timer_period, std::bind(&ComROS::processEvents, &com_));
 }
