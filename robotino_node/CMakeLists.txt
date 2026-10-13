@@ -37,6 +37,7 @@ find_package(geometry_msgs REQUIRED)
 find_package(RobotinoAPI2 REQUIRED)
 find_package(builtin_interfaces REQUIRED)
 find_package(rto_msgs REQUIRED)
+find_package(control_msgs REQUIRED)
 
 add_executable(
   robotino_node
@@ -45,6 +46,7 @@ add_executable(
   src/BumperROS.cpp
   src/ComROS.cpp
   src/DistanceSensorArrayROS.cpp
+  src/IOInterfaceROS.cpp
   src/MotorArrayROS.cpp
   src/OmniDriveROS.cpp
   src/LaserRangeFinderROS.cpp
@@ -63,6 +65,7 @@ target_link_libraries(
   ${geometry_msgs_TARGETS}
   ${builtin_interfaces_TARGETS}
   ${rto_msgs_TARGETS}
+  ${control_msgs_TARGETS}
 )
 
 target_include_directories(
