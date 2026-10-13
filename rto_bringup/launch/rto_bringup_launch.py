@@ -3,17 +3,17 @@ import os
 from ament_index_python.packages import get_package_share_path
 from launch import LaunchContext, LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import Command, LaunchConfiguration
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 
 
 def launch_robot_state_publisher(context: LaunchContext, robot_model):
     robot_model_str = context.perform_substitution(robot_model)
-    urdf_model_path = os.path.join(
-        get_package_share_path('robotino_description'), 'urdf', f'{robot_model_str}.urdf'
+    xacro_model_path = os.path.join(
+        get_package_share_path('robotino_description'), 'urdf', f'{robot_model_str}.urdf.xacro'
     )
-    with open(urdf_model_path, 'r') as file:
-        robot_description = file.read()
+    robot_description = ParameterValue(Command(['xacro ', xacro_model_path]), value_type=str)
 
     return [
         Node(
