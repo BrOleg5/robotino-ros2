@@ -14,6 +14,8 @@ setup(
         # Include all launch files.
         ('share/' + package_name, ['launch/rto_bringup_launch.py']),
         ('share/' + package_name, ['launch/rto_rviz_launch.py']),
+        ('share/' + package_name, ['launch/joy_teleop_launch.py']),
+        ('share/' + package_name + '/config', ['config/joy_teleop.yaml']),
         ('share/' + package_name, ['rviz/rto_config.rviz']),
     ],
     install_requires=['setuptools'],

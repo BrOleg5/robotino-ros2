@@ -1,0 +1,24 @@
+# teleop_twist_joy parameters for the omnidirectional base of Robotino.
+# Button and axis numbers are given in the SDL GameController layout of joy's game_controller_node,
+# which is the same for all gamepads known to SDL (named here as on an Xbox gamepad).
+teleop_twist_joy_node:
+  ros__parameters:
+    axis_linear:  # Left stick: forward/backward and sideways
+      x: 1
+      y: 0
+    scale_linear:
+      x: 0.3
+      y: 0.3
+    scale_linear_turbo:
+      x: 0.6
+      y: 0.6
+
+    axis_angular:  # Right stick horizontal: rotation
+      yaw: 2
+    scale_angular:
+      yaw: 0.8
+    scale_angular_turbo:
+      yaw: 1.5
+
+    enable_button: 9  # LB: hold to drive
+    enable_turbo_button: 10  # RB: hold to drive faster
