@@ -1,0 +1,29 @@
+# ros2_control configuration for robotino4 in gz-sim (loaded by gz_ros2_control)
+controller_manager:
+  ros__parameters:
+    update_rate: 100
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    omni_wheel_drive_controller:
+      type: omni_wheel_drive_controller/OmniWheelDriveController
+
+omni_wheel_drive_controller:
+  ros__parameters:
+    # Anti-clockwise order starting from the wheel at wheel_offset from the x axis
+    wheel_names: [wheel0_joint, wheel1_joint, wheel2_joint]
+    wheel_offset: 1.0471975511965976  # 60 deg
+    robot_radius: 0.1911  # wheel_distance from robotino_description/urdf/robotino4/omniwheel.urdf.xacro
+    wheel_radius: 0.0625
+
+    odom_frame_id: odom
+    base_frame_id: base_link
+    enable_odom_tf: true
+    open_loop: false
+    position_feedback: true
+    cmd_vel_timeout: 0.5
+
+    diagonal_covariance:
+      pose: [0.001, 0.001, 0.001, 0.001, 0.001, 0.01]
+      twist: [0.001, 0.001, 0.001, 0.001, 0.001, 0.01]

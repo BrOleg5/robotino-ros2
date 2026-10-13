@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!-- Velocity controlled wheel joint for gz_ros2_control -->
+  <xacro:macro name="wheel_ros2_control_joint" params="name max_velocity">
+    <joint name="${name}">
+      <command_interface name="velocity">
+        <param name="min">${-max_velocity}</param>
+        <param name="max">${max_velocity}</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+  </xacro:macro>
+
+  <!-- Omniwheel contact: grip only in the rolling direction, free sliding along the wheel axis
+       (the passive rollers of a real omniwheel). fdir1 is given in the collision frame,
+       whose z axis is the wheel axis in robotino_description. -->
+  <xacro:macro name="omniwheel_friction" params="link">
+    <gazebo reference="${link}">
+      <mu1>0.0</mu1>
+      <mu2>1.0</mu2>
+      <fdir1>0 0 1</fdir1>
+    </gazebo>
+  </xacro:macro>
+
+  <xacro:macro name="robotino_ros2_control" params="controllers_file max_wheel_velocity:=20.0">
+    <ros2_control name="RobotinoGazebo" type="system">
+      <hardware>
+        <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+      </hardware>
+      <xacro:wheel_ros2_control_joint name="wheel0_joint" max_velocity="${max_wheel_velocity}"/>
+      <xacro:wheel_ros2_control_joint name="wheel1_joint" max_velocity="${max_wheel_velocity}"/>
+      <xacro:wheel_ros2_control_joint name="wheel2_joint" max_velocity="${max_wheel_velocity}"/>
+    </ros2_control>
+
+    <xacro:omniwheel_friction link="wheel0_link"/>
+    <xacro:omniwheel_friction link="wheel1_link"/>
+    <xacro:omniwheel_friction link="wheel2_link"/>
+
+    <gazebo>
+      <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+        <parameters>${controllers_file}</parameters>
+      </plugin>
+    </gazebo>
+  </xacro:macro>
+</robot>
