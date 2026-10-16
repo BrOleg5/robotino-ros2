@@ -59,7 +59,7 @@ On Ubuntu 26.04 with ROS 2 Lyrical (or Ubuntu 24.04 with ROS 2 Jazzy):
   `ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=/robotino/cmd_vel`
   (`teleop_twist_keyboard` is preinstalled in the dev container).
 - To drive the robot with a gamepad, see [Gamepad teleop](#gamepad-teleop).
-- To build a map and localize in it, see [SLAM](#slam).
+- To build a map and localize in it, see [SLAM](#slam) and [Localization with AMCL](#localization-with-amcl).
 
 ### Gamepad teleop
 
@@ -246,3 +246,33 @@ The robot is expected to start at the origin of the map; otherwise set its pose 
 The parameters are tuned for the Hokuyo URG-04LX-UG01 (240°, guaranteed range 4 m): the map is built from
 ranges up to 4 m, and a scan is added to the pose graph every 0.2 m or 0.2 rad of travel. Long featureless corridors
 and open spaces wider than the laser range are hard for scan matching; there the map relies on the odometry.
+
+## Localization with AMCL
+
+[AMCL](https://docs.nav2.org/configuration/packages/configuring-amcl.html) of Nav2 localizes the robot in an
+occupancy grid map saved by **Save Map** (see [SLAM](#slam)) with a particle filter. Each particle is a
+hypothesis of the robot pose, moved by the odometry and weighted by how well the laser scan matches the map.
+Unlike the localization mode of slam_toolbox, AMCL keeps many hypotheses, so it recovers from a wrong initial
+pose and the map can be edited in an image editor, but the pose is less precise.
+`map_server` publishes the map on `/map`, `amcl` publishes `/amcl_pose` and the TF `map` → `odom`.
+
+- Real robot: start `rto_bringup_launch.py`, then
+  `ros2 launch rto_bringup amcl_launch.py map:=/home/ros/maps/lab.yaml`
+- Simulation: start `ros2 launch robotino_gazebo gazebo_sim.launch.py world:=robotino_test rviz:=false`, then
+  `ros2 launch rto_bringup amcl_launch.py map:=/home/ros/maps/lab.yaml use_sim_time:=true`
+
+Do not run it together with `slam_launch.py`: both publish `map` → `odom`.
+The robot is expected to start at the origin of the map; otherwise set its pose with **2D Pose Estimate**
+in RViz and drive a bit: AMCL updates the pose only after the robot moves 0.1 m or 0.1 rad.
+RViz shows the estimated pose with its covariance (display **AMCL pose**).
+
+| Argument | Default | Description |
+| --- | --- | --- |
+| `map` | `""` | Occupancy grid map `<path>.yaml`, required |
+| `params_file` | [rto_bringup/config/amcl.yaml](rto_bringup/config/amcl.yaml) | `map_server`, `amcl` and `lifecycle_manager` parameters |
+| `use_sim_time` | `false` | `true` for the simulation |
+| `rviz` | `true` | Start RViz |
+| `rviz_config_file` | `rto_bringup/rviz/amcl.rviz` | RViz config |
+
+AMCL uses the omnidirectional motion model `nav2_amcl::OmniMotionModel` and the likelihood field laser model
+with ranges up to 4 m.

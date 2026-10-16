@@ -35,6 +35,8 @@ RUN apt-get update && apt-get full-upgrade -y \
         ros-${ROS_DISTRO}-joint-state-publisher \
         ros-${ROS_DISTRO}-joint-state-publisher-gui \
         ros-${ROS_DISTRO}-joy \
+        ros-${ROS_DISTRO}-nav2-amcl \
+        ros-${ROS_DISTRO}-nav2-lifecycle-manager \
         ros-${ROS_DISTRO}-nav2-map-server \
         ros-${ROS_DISTRO}-omni-wheel-drive-controller \
         ros-${ROS_DISTRO}-realsense2-camera-msgs \
