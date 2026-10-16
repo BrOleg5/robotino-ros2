@@ -47,7 +47,6 @@ RUN apt-get update && apt-get full-upgrade -y \
         ros-${ROS_DISTRO}-ros2controlcli \
         ros-${ROS_DISTRO}-slam-toolbox \
         ros-${ROS_DISTRO}-teleop-twist-joy \
-        ros-${ROS_DISTRO}-teleop-twist-keyboard \
         ros-${ROS_DISTRO}-xacro \
     && rm -rf /var/lib/apt/lists/*
 

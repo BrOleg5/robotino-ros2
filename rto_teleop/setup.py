@@ -14,11 +14,12 @@ setup(
     zip_safe=True,
     maintainer='rahul',
     maintainer_email='karahul209@gmail.com',
-    description='Safety layer of teleoperation of Robotino',
+    description='Keyboard teleoperation of Robotino and the safety layer of teleoperation',
     license='TODO: License declaration',
     extras_require={'test': ['pytest']},
     entry_points={
         'console_scripts': [
+            'keyboard_teleop_tty = rto_teleop.keyboard_teleop_tty:main',
             'teleop_safety = rto_teleop.teleop_safety:main',
         ],
     },

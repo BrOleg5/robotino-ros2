@@ -55,10 +55,8 @@ On Ubuntu 26.04 with ROS 2 Lyrical (or Ubuntu 24.04 with ROS 2 Jazzy):
   - `camera_info_url:=file:///path/to/calibration.yaml` sets the camera calibration file
 - To launch RViz visualization, use `ros2 launch rto_bringup rto_rviz_launch.py`
 - To view the robot model only, use `ros2 launch robotino_description display_urdf.launch.py robot_model:=robotino4`
-- **Note:** The robotino teleop package was not ported fully. To use keyboard teleop, run
-  `ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=/robotino/cmd_vel`
-  (`teleop_twist_keyboard` is preinstalled in the dev container).
-- To drive the robot with a gamepad, see [Gamepad teleop](#gamepad-teleop) and [Teleop safety](#teleop-safety).
+- To drive the robot with a gamepad or the keyboard, see [Gamepad teleop](#gamepad-teleop),
+  [Keyboard teleop](#keyboard-teleop) and [Teleop safety](#teleop-safety).
 - To build a map and localize in it, see [SLAM](#slam) and [Localization with AMCL](#localization-with-amcl).
 
 ### Gamepad teleop
@@ -93,6 +91,40 @@ The dev container gets the host's `/dev/input`, so gamepads connected to the hos
 it, including ones plugged in after the container start. The container user needs read access to
 `/dev/input/event*` on the host; if the gamepad is not found, check the permissions of its device.
 
+### Keyboard teleop
+
+`keyboard_teleop_tty` of the `rto_teleop` package reads keys in the terminal, so it is started with
+`ros2 run` together with the [safety layer](#teleop-safety):
+```bash
+ros2 launch rto_bringup teleop_safety_launch.py   # use_sim_time:=true for the simulation
+ros2 run rto_teleop keyboard_teleop_tty           # in another terminal
+```
+`joy_teleop_launch.py` starts the safety layer too, so with it running only `keyboard_teleop_tty` is needed.
+
+| Key | Action |
+| --- | --- |
+| `w` / `s` | Forward / backward |
+| `a` / `d` | Left / right |
+| `q` / `e` | Rotate left / right |
+| Shift + key | Turbo |
+| Space | Stop |
+| Ctrl+R | Reset the emergency stop |
+| Ctrl+C | Quit |
+
+The robot moves only while a key is held: the terminal repeats a held key, and the robot stops 0.15 s
+after the repeats stop (0.6 s after the first press, to wait for the autorepeat delay). A terminal reports
+only the last held key, so keys are not combined.
+
+The node publishes to `/robotino/cmd_vel_teleop`; without the safety layer run it with
+`--ros-args -r /robotino/cmd_vel_teleop:=/robotino/cmd_vel`.
+
+| Parameter | Default | Description |
+| --- | --- | --- |
+| `linear_speed` | `0.2` | Linear speed [m/s] |
+| `angular_speed` | `0.6` | Angular speed [rad/s] |
+| `turbo_scale` | `2.0` | Speed factor with Shift |
+| `key_timeout`, `first_key_timeout` | `0.15`, `0.6` | Stop if no key repeat comes within this time [s] |
+
 ### Teleop safety
 
 `teleop_safety_launch.py` (started by `joy_teleop_launch.py` by default) protects the robot during
@@ -112,7 +144,8 @@ teleop -> /robotino/cmd_vel_teleop -> teleop_safety -> /robotino/cmd_vel_safe
   sees 240° ahead; behind the robot only the IR sensors see obstacles, up to 30 cm from the body.
   Without laser scans for 1 s collision_monitor stops the robot.
 - **Emergency stop**: when the bumper is pressed, `teleop_safety` stops the robot and drops all commands
-  until the emergency stop is reset by holding Back + Start of the gamepad for 1 s or
+  until the emergency stop is reset by holding Back + Start of the gamepad for 1 s, Ctrl+R in
+  `keyboard_teleop_tty` or
   `ros2 service call /robotino/safety/reset std_srvs/srv/Trigger`. After a reset the robot can move away
   while the bumper is still pressed; commands pass after the first zero command, so a deflected stick
   does not jerk the robot.
@@ -234,9 +267,8 @@ works with the simulation and the real robot alike.
     A path to any gz-sim `.sdf` world file is accepted too
   - `gui:=false` runs Gazebo headless, `rviz:=false` disables RViz
   - `x:=`, `y:=`, `yaw:=` set the spawn pose
-- Drive the robot:
-  `ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=/robotino/cmd_vel`
-  or `ros2 launch rto_bringup joy_teleop_launch.py use_sim_time:=true`
+- Drive the robot: `ros2 launch rto_bringup joy_teleop_launch.py use_sim_time:=true` or
+  [keyboard teleop](#keyboard-teleop) with `teleop_safety_launch.py use_sim_time:=true`
 
 Wheels are velocity controlled by `omni_wheel_drive_controller`, which also computes the wheel odometry.
 The omniwheel rollers are modeled by anisotropic friction: wheels grip only in the rolling direction.
