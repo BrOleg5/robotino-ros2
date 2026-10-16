@@ -17,11 +17,13 @@ setup(
         ('share/' + package_name, ['launch/joy_teleop_launch.py']),
         ('share/' + package_name, ['launch/slam_launch.py']),
         ('share/' + package_name, ['launch/amcl_launch.py']),
+        ('share/' + package_name, ['launch/teleop_safety_launch.py']),
         ('share/' + package_name + '/config', [
             'config/amcl.yaml',
             'config/joy_teleop.yaml',
             'config/slam_toolbox_localization.yaml',
             'config/slam_toolbox_mapping.yaml',
+            'config/teleop_safety.yaml',
         ]),
         ('share/' + package_name, [
             'rviz/amcl.rviz',
