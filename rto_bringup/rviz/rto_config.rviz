@@ -292,6 +292,37 @@ Visualization Manager:
             Value: /robotino/ir8
           Value: true
       Value: true
+    - Class: rviz_common/Group
+      Enabled: true
+      Name: Safety zones
+      Displays:
+        - Alpha: 1
+          Class: rviz_default_plugins/Polygon
+          Color: 255; 0; 0
+          Enabled: true
+          Name: Stop zone
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /collision_monitor/stop_zone
+          Value: true
+        - Alpha: 1
+          Class: rviz_default_plugins/Polygon
+          Color: 255; 170; 0
+          Enabled: true
+          Name: Slow zone
+          Topic:
+            Depth: 5
+            Durability Policy: Volatile
+            Filter size: 10
+            History Policy: Keep Last
+            Reliability Policy: Reliable
+            Value: /collision_monitor/slow_zone
+          Value: true
+      Value: true
     - Class: rviz_default_plugins/Image
       Enabled: true
       Name: Camera

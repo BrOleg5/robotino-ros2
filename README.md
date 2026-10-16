@@ -58,14 +58,14 @@ On Ubuntu 26.04 with ROS 2 Lyrical (or Ubuntu 24.04 with ROS 2 Jazzy):
 - **Note:** The robotino teleop package was not ported fully. To use keyboard teleop, run
   `ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=/robotino/cmd_vel`
   (`teleop_twist_keyboard` is preinstalled in the dev container).
-- To drive the robot with a gamepad, see [Gamepad teleop](#gamepad-teleop).
+- To drive the robot with a gamepad, see [Gamepad teleop](#gamepad-teleop) and [Teleop safety](#teleop-safety).
 - To build a map and localize in it, see [SLAM](#slam) and [Localization with AMCL](#localization-with-amcl).
 
 ### Gamepad teleop
 
-`ros2 launch rto_bringup joy_teleop_launch.py` starts `game_controller_node` of the `joy` package and
-`teleop_twist_joy`, which publish
-velocity commands to `/robotino/cmd_vel`. It works with the real robot and the simulation alike.
+`ros2 launch rto_bringup joy_teleop_launch.py` starts `game_controller_node` of the `joy` package,
+`teleop_twist_joy` and the [safety layer](#teleop-safety). It works with the real robot and the simulation
+alike (add `use_sim_time:=true` for the simulation).
 
 | Control | Action |
 | --- | --- |
@@ -73,11 +73,14 @@ velocity commands to `/robotino/cmd_vel`. It works with the real robot and the s
 | RB (hold) | Turbo: higher speed |
 | Left stick | Drive forward/backward and sideways |
 | Right stick, horizontal | Rotate |
+| Back + Start (hold 1 s) | Reset the emergency stop |
 
 | Argument | Default | Description |
 | --- | --- | --- |
 | `joy_dev` | `0` | Gamepad device id, if several gamepads are connected |
-| `joy_vel` | `/robotino/cmd_vel` | Topic of velocity commands |
+| `joy_vel` | `""` | Topic of velocity commands, empty: `/robotino/cmd_vel_teleop` with the safety layer, `/robotino/cmd_vel` without it |
+| `safety` | `true` | Start the [safety layer](#teleop-safety) |
+| `use_sim_time` | `false` | `true` for the simulation |
 | `config_filepath` | `rto_bringup/config/joy_teleop.yaml` | Axes, buttons and speed scales |
 
 `game_controller_node` maps every gamepad known to SDL to the same layout of axes and buttons, so
@@ -89,6 +92,55 @@ To change the mapping, check axis and button numbers with `ros2 run joy game_con
 The dev container gets the host's `/dev/input`, so gamepads connected to the host are available inside
 it, including ones plugged in after the container start. The container user needs read access to
 `/dev/input/event*` on the host; if the gamepad is not found, check the permissions of its device.
+
+### Teleop safety
+
+`teleop_safety_launch.py` (started by `joy_teleop_launch.py` by default) protects the robot during
+teleoperation with [nav2 collision_monitor](https://docs.nav2.org/rolling/tutorials/general_tutorials/using_collision_monitor/using_collision_monitor/)
+and the `teleop_safety` node of `rto_teleop`:
+```
+teleop -> /robotino/cmd_vel_teleop -> teleop_safety -> /robotino/cmd_vel_safe
+       -> collision_monitor -> /robotino/cmd_vel
+```
+
+- **Slowdown**: an obstacle closer than `slow_distance` (0.425 m) to the body in the direction of motion
+  limits the speed to 0.2 m/s and 0.6 rad/s.
+- **Stop**: an obstacle closer than `stop_distance` (7.5 cm) to the body in the direction of motion stops
+  the robot. Commands in other directions still work, so the robot can move away from an obstacle or along
+  a wall; rotation in place is never limited (the robot is round).
+- Obstacles are taken from the laser scan `/laser_scan` and the IR sensors `/robotino/ir0..8`. The laser
+  sees 240° ahead; behind the robot only the IR sensors see obstacles, up to 30 cm from the body.
+  Without laser scans for 1 s collision_monitor stops the robot.
+- **Emergency stop**: when the bumper is pressed, `teleop_safety` stops the robot and drops all commands
+  until the emergency stop is reset by holding Back + Start of the gamepad for 1 s or
+  `ros2 service call /robotino/safety/reset std_srvs/srv/Trigger`. After a reset the robot can move away
+  while the bumper is still pressed; commands pass after the first zero command, so a deflected stick
+  does not jerk the robot.
+
+The zones depend on the direction of the commanded velocity: `teleop_safety_launch.py` generates
+`velocity_polygon`s of collision_monitor for 24 directions. RViz (`rto_config.rviz`, `sim.rviz`) shows the
+current zones (group **Safety zones**).
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `/robotino/cmd_vel_teleop` | `geometry_msgs/Twist` | Commands of the teleop |
+| `/robotino/safety/emergency_stop` | `std_msgs/Bool` | Emergency stop is active, transient local |
+| `/robotino/safety/reset` | `std_srvs/Trigger` (service) | Reset the emergency stop |
+| `/collision_monitor_state` | `nav2_msgs/CollisionMonitorState` | Current action of collision_monitor |
+| `/collision_monitor/stop_zone`, `/collision_monitor/slow_zone` | `geometry_msgs/PolygonStamped` | Current zones |
+
+| Argument | Default | Description |
+| --- | --- | --- |
+| `params_file` | [rto_bringup/config/teleop_safety.yaml](rto_bringup/config/teleop_safety.yaml) | collision_monitor and teleop_safety parameters: speed limits, sensors, reset buttons |
+| `stop_distance` | `0.075` | Stop zone around the body [m] |
+| `slow_distance` | `0.425` | Slow zone around the body [m] |
+| `use_sim_time` | `false` | `true` for the simulation |
+
+Limitations:
+- The edges of the laser field of view hit the robot itself; these points are masked by an exclusion
+  zone of collision_monitor, which Jazzy does not support: on Jazzy they may block motion in some directions.
+- An IR sensor reports a range beyond its 30 cm span when it sees nothing. IR sources have no timeout,
+  so a silent IR sensor is not detected.
 
 ### Battery, gyroscope and shutdown
 
@@ -184,6 +236,7 @@ works with the simulation and the real robot alike.
   - `x:=`, `y:=`, `yaw:=` set the spawn pose
 - Drive the robot:
   `ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=/robotino/cmd_vel`
+  or `ros2 launch rto_bringup joy_teleop_launch.py use_sim_time:=true`
 
 Wheels are velocity controlled by `omni_wheel_drive_controller`, which also computes the wheel odometry.
 The omniwheel rollers are modeled by anisotropic friction: wheels grip only in the rolling direction.
