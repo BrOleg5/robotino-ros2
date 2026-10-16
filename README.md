@@ -59,6 +59,7 @@ On Ubuntu 26.04 with ROS 2 Lyrical (or Ubuntu 24.04 with ROS 2 Jazzy):
   `ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=/robotino/cmd_vel`
   (`teleop_twist_keyboard` is preinstalled in the dev container).
 - To drive the robot with a gamepad, see [Gamepad teleop](#gamepad-teleop).
+- To build a map and localize in it, see [SLAM](#slam).
 
 ### Gamepad teleop
 
@@ -201,3 +202,47 @@ The camera is a generic RGB camera (`generic_camera` macro in
 [robotino_gazebo/urdf/generic_camera.urdf.xacro](robotino_gazebo/urdf/generic_camera.urdf.xacro)):
 its resolution, field of view, frame rate and noise are macro parameters set in
 [robotino_sim.urdf.xacro](robotino_gazebo/urdf/robotino_sim.urdf.xacro).
+
+## SLAM
+
+2D SLAM is done by [slam_toolbox](https://github.com/SteveMacenski/slam_toolbox) (Karto scan matching with
+pose graph optimization and loop closure) from the Hokuyo laser range finder `/laser_scan` and the wheel
+odometry TF `odom` → `base_link`. slam_toolbox publishes the map `/map` and the TF `map` → `odom`,
+which corrects the odometry drift. The same launch file works with the real robot and the simulation.
+
+- Real robot: start `rto_bringup_launch.py`, then
+  `ros2 launch rto_bringup slam_launch.py`
+- Simulation: start `ros2 launch robotino_gazebo gazebo_sim.launch.py world:=robotino_test rviz:=false`, then
+  `ros2 launch rto_bringup slam_launch.py use_sim_time:=true`
+
+Drive the robot slowly around the area (e.g. with [gamepad teleop](#gamepad-teleop)) and return to visited
+places to close loops. RViz shows the map in the `map` frame, the pose graph (display **Pose graph**) and
+the **SlamToolboxPlugin** panel. In the panel:
+- **Save Map** writes an occupancy grid `<name>.pgm` + `<name>.yaml` for `nav2_map_server`;
+- **Serialize Map** writes the pose graph `<name>.posegraph` + `<name>.data`, which slam_toolbox can load
+  to continue mapping or to localize.
+
+File names without a directory are saved to the working directory of slam_toolbox, so give a full path
+(e.g. `/home/ros/maps/lab`). The same from the command line:
+```bash
+ros2 service call /slam_toolbox/save_map slam_toolbox/srv/SaveMap "{name: {data: /home/ros/maps/lab}}"
+ros2 service call /slam_toolbox/serialize_map slam_toolbox/srv/SerializePoseGraph "{filename: /home/ros/maps/lab}"
+```
+
+To localize in a serialized map without changing it, run
+`ros2 launch rto_bringup slam_launch.py mode:=localization map:=/home/ros/maps/lab`.
+The robot is expected to start at the origin of the map; otherwise set its pose with
+**2D Pose Estimate** in RViz.
+
+| Argument | Default | Description |
+| --- | --- | --- |
+| `mode` | `mapping` | `mapping` builds a map, `localization` localizes in `map` without changing it |
+| `map` | `""` | Serialized pose graph without extension: `mapping` continues it, `localization` requires it |
+| `use_sim_time` | `false` | `true` for the simulation |
+| `slam_params_file` | `""` | slam_toolbox parameters, empty: [rto_bringup/config/slam_toolbox_\<mode\>.yaml](rto_bringup/config) |
+| `rviz` | `true` | Start RViz |
+| `rviz_config_file` | `rto_bringup/rviz/slam.rviz` | RViz config |
+
+The parameters are tuned for the Hokuyo URG-04LX-UG01 (240°, guaranteed range 4 m): the map is built from
+ranges up to 4 m, and a scan is added to the pose graph every 0.2 m or 0.2 rad of travel. Long featureless corridors
+and open spaces wider than the laser range are hard for scan matching; there the map relies on the odometry.
