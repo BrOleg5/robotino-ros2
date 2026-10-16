@@ -62,9 +62,15 @@ class SimAdapter(Node):
         rng.field_of_view = scan.angle_max - scan.angle_min
         rng.min_range = scan.range_min
         rng.max_range = scan.range_max
-        # gz and REP 117 agree: -inf is closer than range_min, +inf is nothing within range_max,
-        # so RViz shows no cone when the sensor sees nothing, like on the real robot
+        # gz reports -inf for obstacles closer than range_min and +inf for nothing within range_max.
+        # nav2 collision_monitor rejects infinite ranges as malformed and ignores ranges out of
+        # the sensor span, so an obstacle closer than range_min is reported at range_min and
+        # nothing in range just beyond range_max; RViz shows no cone for it, like on the real robot
         rng.range = min((r for r in scan.ranges if not math.isnan(r)), default=math.inf)
+        if rng.range < rng.min_range:
+            rng.range = rng.min_range
+        elif rng.range > rng.max_range:
+            rng.range = rng.max_range + 0.01
         pub.publish(rng)
 
     def contacts_callback(self, msg: Contacts):
