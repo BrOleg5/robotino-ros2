@@ -37,6 +37,9 @@ find_package(geometry_msgs REQUIRED)
 find_package(RobotinoAPI2 REQUIRED)
 find_package(builtin_interfaces REQUIRED)
 find_package(rto_msgs REQUIRED)
+find_package(camera_info_manager REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(TURBOJPEG REQUIRED IMPORTED_TARGET libturbojpeg)
 find_package(control_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(nlohmann_json REQUIRED)
@@ -82,6 +85,30 @@ target_include_directories(
   ${ROBOTINOAPI2_INCLUDE_DIR}
 )
 
+add_executable(
+  robotino_camera_node
+  src/robotino_camera_node.cpp
+  src/RobotinoCameraNode.cpp
+  src/ComROS.cpp
+  src/CameraROS.cpp)
+
+target_link_libraries(
+  robotino_camera_node
+  ${REC_ROBOTINO_API2_LIBRARY}
+  rclcpp::rclcpp
+  camera_info_manager::camera_info_manager
+  PkgConfig::TURBOJPEG
+  ${std_msgs_TARGETS}
+  ${sensor_msgs_TARGETS}
+)
+
+target_include_directories(
+  robotino_camera_node PUBLIC
+  $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/${PROJECT_NAME}>
+  $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+  ${ROBOTINOAPI2_INCLUDE_DIR}
+)
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   set(ament_cmake_copyright_FOUND TRUE)
@@ -91,8 +118,7 @@ endif()
 
 install(TARGETS
   robotino_node
-  # rto_camera_node
-  # rto_laserrangefinder_node
+  robotino_camera_node
   DESTINATION lib/${PROJECT_NAME})
 
 ament_package()

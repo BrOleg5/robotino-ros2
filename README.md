@@ -48,6 +48,11 @@ On Ubuntu 26.04 with ROS 2 Lyrical (or Ubuntu 24.04 with ROS 2 Jazzy):
 
 ## Usage
 - To bring up the robot, use `ros2 launch rto_bringup rto_bringup_launch.py hostname:=<robotino ip address> robot_model:=robotino3`
+  - `camera:=false` disables the camera node
+  - `camera_frame_id:=<frame>` overrides the frame of camera images. By default it is `camera_optical_frame`
+    (Logitech C920) for Robotino 3 and `camera_color_optical_frame` (RGB module of RealSense D435, published
+    by `realsense2_camera`) for Robotino 4
+  - `camera_info_url:=file:///path/to/calibration.yaml` sets the camera calibration file
 - To launch RViz visualization, use `ros2 launch rto_bringup rto_rviz_launch.py`
 - To view the robot model only, use `ros2 launch robotino_description display_urdf.launch.py robot_model:=robotino4`
 - **Note:** The robotino teleop package was not ported fully. To use keyboard teleop, run
@@ -125,6 +130,45 @@ ros2 topic pub --once /robotino/gpio_commands control_msgs/msg/DynamicInterfaceG
     interface_values: [{interface_names: [DQ1], values: [1.0]}, {interface_names: [R2], values: [1.0]}]}"
 ```
 
+### Camera
+
+`robotino_camera_node` receives images of the Robotino camera via Robotino API2 and publishes them
+in the `camera` namespace with the topic names of `image_transport`:
+
+| Topic / service | Type | Description |
+| --- | --- | --- |
+| `/camera/image_raw` | `sensor_msgs/Image` | Image, `rgb8` |
+| `/camera/image_raw/compressed` | `sensor_msgs/CompressedImage` | JPEG image, `compressed` transport of `image_transport`. Use it over Wi-Fi and for `ros2 bag` |
+| `/camera/camera_info` | `sensor_msgs/CameraInfo` | Calibration |
+| `/camera/robotino_camera/set_camera_info` | `sensor_msgs/SetCameraInfo` | Saves calibration to `camera_info_url` |
+
+JPEG images transferred by Robotino (`image_format:=mjpg`) are published to `image_raw/compressed` as is,
+without decoding and re-encoding. They are decoded (libjpeg-turbo) only when `image_raw` has subscribers.
+Raw images (`image_format:=raw`) are JPEG-encoded only when `image_raw/compressed` has subscribers.
+Without subscribers the node does no image processing at all.
+
+The node keeps running while Robotino is unreachable and reconnects automatically,
+camera settings are applied again on every connection.
+Run it alone with
+`ros2 run robotino_node robotino_camera_node --ros-args -r __ns:=/camera -p hostname:=<robotino ip address>`.
+
+| Parameter | Default | Description |
+| --- | --- | --- |
+| `hostname` | `192.168.0.1` | Robotino IP address |
+| `camera_number` | `0` | Camera number, if Robotino has several cameras |
+| `frame_id` | `camera_optical_frame` | Frame of published messages |
+| `image_width`, `image_height` | `0` | Requested resolution, `0` keeps the current camera settings |
+| `image_format` | `mjpg` | Transfer format for the requested resolution: `mjpg` or `raw` |
+| `jpeg_quality` | `80` | JPEG quality of `image_raw/compressed` if Robotino transfers raw images |
+| `camera_name` | `camera` | Camera name in the calibration file |
+| `camera_info_url` | `""` | Calibration file, empty means `~/.ros/camera_info/<camera_name>.yaml` |
+| `timer_period_ms` | `20` | Period of polling Robotino API2 events |
+
+Without calibration `/camera/camera_info` contains only the image size. To calibrate, run
+`ros2 run camera_calibration cameracalibrator --size 8x6 --square 0.025 --ros-args -r image:=/camera/image_raw -r camera/set_camera_info:=/camera/robotino_camera/set_camera_info`
+(set `--size` and `--square` for your checkerboard)
+and press **Commit**: the calibration is saved to `camera_info_url`.
+
 ## Simulation in Gazebo
 
 The `robotino_gazebo` package simulates Robotino in Gazebo (gz-sim) with ros2_control.
@@ -151,7 +195,7 @@ The omniwheel rollers are modeled by anisotropic friction: wheels grip only in t
 | `/laser_scan` | `sensor_msgs/LaserScan` | Hokuyo laser range finder |
 | `/robotino/ir0` … `/robotino/ir8` | `sensor_msgs/Range` | Infrared distance sensors |
 | `/robotino/bumper` | `std_msgs/Bool` | Bumper contact |
-| `/image_raw`, `/camera_info` | `sensor_msgs/Image`, `sensor_msgs/CameraInfo` | RGB camera |
+| `/camera/image_raw`, `/camera/camera_info` | `sensor_msgs/Image`, `sensor_msgs/CameraInfo` | RGB camera, compressed transports as on the real robot |
 
 The camera is a generic RGB camera (`generic_camera` macro in
 [robotino_gazebo/urdf/generic_camera.urdf.xacro](robotino_gazebo/urdf/generic_camera.urdf.xacro)):

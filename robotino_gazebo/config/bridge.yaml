@@ -11,13 +11,8 @@
   gz_type_name: gz.msgs.LaserScan
   direction: GZ_TO_ROS
 
-- ros_topic_name: /image_raw
-  gz_topic_name: robotino/sim/camera/image
-  ros_type_name: sensor_msgs/msg/Image
-  gz_type_name: gz.msgs.Image
-  direction: GZ_TO_ROS
-
-- ros_topic_name: /camera_info
+# Camera image is bridged by ros_gz_image image_bridge, which also publishes compressed transports
+- ros_topic_name: /camera/camera_info
   gz_topic_name: robotino/sim/camera/camera_info
   ros_type_name: sensor_msgs/msg/CameraInfo
   gz_type_name: gz.msgs.CameraInfo

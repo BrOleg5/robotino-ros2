@@ -1,0 +1,80 @@
+/*
+ * RobotinoCameraNode.cpp
+ *
+ *  Created on: 09.12.2011
+ *      Author: indorewala@servicerobotics.eu
+ *  Edited on: 13.10.2026
+ *      Author: BrOleg5
+ */
+#include <string>
+#include <chrono>
+
+#include "RobotinoCameraNode.h"
+
+RobotinoCameraNode::RobotinoCameraNode() : Node("robotino_camera"), com_(this), camera_(this) {
+    this->declare_parameter("hostname", "192.168.0.1");
+    this->declare_parameter("timer_period_ms", 20);
+    this->declare_parameter("camera_number", 0);
+    this->declare_parameter("frame_id", "camera_optical_frame");
+    this->declare_parameter("camera_name", "camera");
+    this->declare_parameter("camera_info_url", "");
+    // Requested resolution, 0 keeps the current camera settings
+    this->declare_parameter("image_width", 0);
+    this->declare_parameter("image_height", 0);
+    // "mjpg" (JPEG images are published to image_raw/compressed as is) or "raw"
+    this->declare_parameter("image_format", "mjpg");
+    // Quality of JPEG encoding for image_raw/compressed, used only if Robotino transfers raw images
+    this->declare_parameter("jpeg_quality", 80);
+
+    camera_.configure(this->get_parameter("frame_id").as_string(),
+                      this->get_parameter("camera_name").as_string(),
+                      this->get_parameter("camera_info_url").as_string(),
+                      this->get_parameter("jpeg_quality").as_int());
+    camera_.setComId(com_.id());
+
+    // Non-blocking connection with automatic reconnection: the node keeps running while Robotino is unreachable
+    std::string hostname = this->get_parameter("hostname").as_string();
+    com_.setAddress(hostname.c_str());
+    com_.setAutoReconnectEnabled(true);
+    com_.connectToServer(false);
+    RCLCPP_INFO(this->get_logger(), "Connecting to Robotino with host IP %s", hostname.c_str());
+
+    auto timer_period = std::chrono::milliseconds(this->get_parameter("timer_period_ms").as_int());
+    timer_ = this->create_wall_timer(timer_period, std::bind(&RobotinoCameraNode::timerCallback, this));
+}
+
+void RobotinoCameraNode::timerCallback() {
+    // Com::processEvents() dispatches events of all API2 objects associated with com_, including camera_
+    com_.processEvents();
+
+    bool connected = com_.isConnected();
+    if (connected && !connected_) {
+        applyCameraSettings();
+    }
+    if (!connected) {
+        RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 10000,
+                             "Waiting for connection to Robotino with address %s", com_.address());
+    }
+    connected_ = connected;
+}
+
+void RobotinoCameraNode::applyCameraSettings() {
+    int camera_number = this->get_parameter("camera_number").as_int();
+    try {
+        camera_.setCameraNumber(camera_number);
+    } catch (const rec::robotino::api2::RobotinoException& e) {
+        RCLCPP_ERROR(this->get_logger(), "Cannot select camera %d: %s", camera_number, e.what());
+    }
+
+    int image_width = this->get_parameter("image_width").as_int();
+    int image_height = this->get_parameter("image_height").as_int();
+    if (image_width > 0 && image_height > 0) {
+        std::string image_format = this->get_parameter("image_format").as_string();
+        try {
+            camera_.setFormat(image_width, image_height, image_format.c_str());
+        } catch (const rec::robotino::api2::RobotinoException& e) {
+            RCLCPP_ERROR(this->get_logger(), "Cannot set camera format %dx%d %s: %s", image_width,
+                         image_height, image_format.c_str(), e.what());
+        }
+    }
+}
