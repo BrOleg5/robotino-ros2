@@ -12,8 +12,10 @@
        compatible ROS topics by ros_gz_bridge and sim_adapter.py. -->
 
   <!-- Hokuyo URG-04LX-UG01: 240 deg field of view, 1024 steps per revolution (0.352 deg),
-       measuring steps 44..725 with step 384 straight ahead, 20..5600 mm, 100 ms per scan
+       measuring steps 44..725 with step 384 straight ahead, 100 ms per scan
        (URG Series Communication Protocol Specification SCIP 2.0, C-42-03320B, PP command).
+       SCIP reports ranges up to 5600 mm, but the datasheet guarantees only 20..4000 mm,
+       so the simulated range is limited to 4 m.
        Accuracy is +-30 mm up to 1 m and +-3 % beyond, approximated by constant noise. -->
   <xacro:macro name="laser_range_finder_sim" params="frame:=laser_link">
     <xacro:property name="laser_step" value="${2*pi/1024}"/>
@@ -34,7 +36,7 @@
           </scan>
           <range>
             <min>0.02</min>
-            <max>5.6</max>
+            <max>4.0</max>
             <resolution>0.001</resolution>
           </range>
           <noise>
