@@ -13,10 +13,14 @@
 #include "BumperROS.h"
 #include "ComROS.h"
 #include "DistanceSensorArrayROS.h"
+#include "GyroscopeROS.h"
+#include "IOInterfaceROS.h"
 #include "MotorArrayROS.h"
 #include "OmniDriveROS.h"
 #include "LaserRangeFinderROS.h"
 #include "OdometryROS.h"
+#include "PowerManagementROS.h"
+#include "ShutdownROS.h"
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -31,12 +35,17 @@ class RobotinoNode : public rclcpp::Node {
     BumperROS bumper_;
     ComROS com_;
     DistanceSensorArrayROS distance_sensor_array_;
+    GyroscopeROS gyroscope_;
+    IOInterfaceROS io_interface_;
     MotorArrayROS motor_array_;
     OmniDriveROS omni_drive_;
     LaserRangeFinderROS laser_range_finder_;
     OdometryROS odometry_;
+    PowerManagementROS power_management_;
+    ShutdownROS shutdown_;
 
     void initModules();
+    void timerCallback();
 };
 
 #endif /* ROBOTINONODE_H_ */

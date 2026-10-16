@@ -58,6 +58,77 @@ On Ubuntu 26.04 with ROS 2 Lyrical (or Ubuntu 24.04 with ROS 2 Jazzy):
 - **Note:** The robotino teleop package was not ported fully. To use keyboard teleop, run
   `ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -r cmd_vel:=/robotino/cmd_vel`
   (`teleop_twist_keyboard` is preinstalled in the dev container).
+- To drive the robot with a gamepad, see [Gamepad teleop](#gamepad-teleop).
+
+### Gamepad teleop
+
+`ros2 launch rto_bringup joy_teleop_launch.py` starts `game_controller_node` of the `joy` package and
+`teleop_twist_joy`, which publish
+velocity commands to `/robotino/cmd_vel`. It works with the real robot and the simulation alike.
+
+| Control | Action |
+| --- | --- |
+| LB (hold) | Enable motion; releasing it stops the robot |
+| RB (hold) | Turbo: higher speed |
+| Left stick | Drive forward/backward and sideways |
+| Right stick, horizontal | Rotate |
+
+| Argument | Default | Description |
+| --- | --- | --- |
+| `joy_dev` | `0` | Gamepad device id, if several gamepads are connected |
+| `joy_vel` | `/robotino/cmd_vel` | Topic of velocity commands |
+| `config_filepath` | `rto_bringup/config/joy_teleop.yaml` | Axes, buttons and speed scales |
+
+`game_controller_node` maps every gamepad known to SDL to the same layout of axes and buttons, so
+`joy_teleop.yaml` does not depend on the gamepad model (buttons are named as on an Xbox gamepad).
+`joy_node` publishes the raw layout of the gamepad driver instead, which does not match this file.
+To change the mapping, check axis and button numbers with `ros2 run joy game_controller_node` and
+`ros2 topic echo /joy`, then pass your own file with `config_filepath:=<path>`.
+
+The dev container gets the host's `/dev/input`, so gamepads connected to the host are available inside
+it, including ones plugged in after the container start. The container user needs read access to
+`/dev/input/event*` on the host; if the gamepad is not found, check the permissions of its device.
+
+### Battery, gyroscope and shutdown
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `/robotino/battery_state` | `sensor_msgs/BatteryState` | Battery voltage and current consumed by the robot (negative). `power_supply_technology` is derived from the battery type reported by Robotino: `LION` for the Festool batteries of Robotino 4, `NIMH`, or `UNKNOWN` for lead-acid ones. With Festool batteries `percentage` is the mean charge of the packs and `power_supply_status` is `CHARGING` while any pack is charging, `NOT_CHARGING` with the external power supply plugged in and `DISCHARGING` otherwise. Without them `percentage` is not reported and the status is `CHARGING` while the external power supply is plugged in |
+| `/robotino/batteries/accu0` … `accu7` | `sensor_msgs/BatteryState` | Festool battery packs of Robotino 4 by slot, the topic appears once a pack is found in the slot: voltage, `percentage`, `present`. `power_supply_status` is `CHARGING` while the pack is charging, `DISCHARGING` while it powers the robot and `NOT_CHARGING` otherwise: the charger electronics switch the robot between the packs |
+| `/robotino/battery_low` | `std_msgs/Bool` | Low battery warning: Robotino shuts down soon. Published on change with transient local durability |
+| `/robotino/imu` | `sensor_msgs/Imu` | Yaw and yaw rate of the gyroscope in `base_link`. Linear acceleration is not provided |
+| `/robotino/joint_states` | `sensor_msgs/JointState` | Wheel positions, velocities and torques. Torque in N·m is estimated from the motor current, without gearbox losses |
+| `/robotino/shutdown` | `std_srvs/Trigger` (service) | Shuts down the Robotino computer |
+
+To shut down the robot:
+```bash
+ros2 service call /robotino/shutdown std_srvs/srv/Trigger
+```
+
+### I/O interface
+
+`robotino_node` exposes the [I/O interface](https://ip.festo-didactic.com/Infoportal/Robotino/Hardware/Interfaces/EN/IOInterface.html)
+with `control_msgs/msg/DynamicInterfaceGroupValues`, the message type of `gpio_controllers/GpioCommandController`:
+
+| Topic | Description |
+| --- | --- |
+| `/robotino/gpio_states` | States of all channels, published when any of them changes |
+| `/robotino/gpio_commands` | Commands for digital outputs and relays |
+
+| Group | Channels | Values | Access |
+| --- | --- | --- | --- |
+| `digital_inputs` | `DI1` … `DI8` | 0.0 / 1.0 | read |
+| `analog_inputs` | `AI1` … `AI8` | 0–10 V | read |
+| `digital_outputs` | `DQ1` … `DQ8` | 0.0 / 1.0 | read / write |
+| `relays` | `R1`, `R2` | 0.0 / 1.0 | read / write |
+
+A command may contain only some groups and channels; the other channels keep their last commanded value
+(0.0 after the node start). For example, to switch on digital output 1 and relay 2:
+```bash
+ros2 topic pub --once /robotino/gpio_commands control_msgs/msg/DynamicInterfaceGroupValues \
+  "{interface_groups: [digital_outputs, relays],
+    interface_values: [{interface_names: [DQ1], values: [1.0]}, {interface_names: [R2], values: [1.0]}]}"
+```
 
 ### Camera
 

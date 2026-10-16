@@ -27,9 +27,11 @@ class MotorArrayROS : public rec::robotino::api2::MotorArray {
     bool hasVelocities;
     double gearRatio;
     double encoderResolutionPPR;
+    double motorTorqueConstant;
 
     void velocitiesChangedEvent(const float* velocities, unsigned int size);
     void positionsChangedEvent(const int* positions, unsigned int size);
+    void currentsChangedEvent(const float* currents, unsigned int size);
 
     inline void publish() {
         joint_state_msg_.header.stamp = clock_ptr_->now();
