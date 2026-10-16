@@ -39,6 +39,7 @@ find_package(builtin_interfaces REQUIRED)
 find_package(rto_msgs REQUIRED)
 find_package(control_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
+find_package(nlohmann_json REQUIRED)
 
 add_executable(
   robotino_node
@@ -71,6 +72,7 @@ target_link_libraries(
   ${rto_msgs_TARGETS}
   ${control_msgs_TARGETS}
   ${std_srvs_TARGETS}
+  nlohmann_json::nlohmann_json
 )
 
 target_include_directories(
