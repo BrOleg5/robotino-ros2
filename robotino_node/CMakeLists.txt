@@ -38,6 +38,8 @@ find_package(RobotinoAPI2 REQUIRED)
 find_package(builtin_interfaces REQUIRED)
 find_package(rto_msgs REQUIRED)
 find_package(control_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
+find_package(nlohmann_json REQUIRED)
 
 add_executable(
   robotino_node
@@ -46,11 +48,14 @@ add_executable(
   src/BumperROS.cpp
   src/ComROS.cpp
   src/DistanceSensorArrayROS.cpp
+  src/GyroscopeROS.cpp
   src/IOInterfaceROS.cpp
   src/MotorArrayROS.cpp
   src/OmniDriveROS.cpp
   src/LaserRangeFinderROS.cpp
-  src/OdometryROS.cpp)
+  src/OdometryROS.cpp
+  src/PowerManagementROS.cpp
+  src/ShutdownROS.cpp)
 
 target_link_libraries(
   robotino_node
@@ -66,6 +71,8 @@ target_link_libraries(
   ${builtin_interfaces_TARGETS}
   ${rto_msgs_TARGETS}
   ${control_msgs_TARGETS}
+  ${std_srvs_TARGETS}
+  nlohmann_json::nlohmann_json
 )
 
 target_include_directories(
