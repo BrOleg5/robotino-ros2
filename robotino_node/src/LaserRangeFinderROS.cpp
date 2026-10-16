@@ -7,6 +7,7 @@
  *      Author: BrOleg5
  *
  */
+#include <cmath>
 #include <string>
 
 #include "LaserRangeFinderROS.h"
@@ -31,8 +32,12 @@ void LaserRangeFinderROS::scanEvent(const rec::robotino::api2::LaserRangeFinderR
     laser_scan_msg_.angle_min = scan.angle_min;
     laser_scan_msg_.angle_max = scan.angle_max;
     laser_scan_msg_.angle_increment = scan.angle_increment;
-    laser_scan_msg_.time_increment = scan.time_increment;
-    laser_scan_msg_.scan_time = scan.scan_time;
+    // The Robotino API reports the scan period in time_increment and leaves scan_time zero.
+    // Treat a zero scan_time as that case and derive the per-beam time from one full rotation.
+    float scan_time = scan.scan_time > 0.0f ? scan.scan_time : scan.time_increment;
+    laser_scan_msg_.scan_time = scan_time;
+    laser_scan_msg_.time_increment =
+        scan.scan_time > 0.0f ? scan.time_increment : scan_time * scan.angle_increment / (2.0f * M_PI);
     laser_scan_msg_.range_min = scan.range_min;
     laser_scan_msg_.range_max = scan.range_max;
 
