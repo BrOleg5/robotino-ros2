@@ -93,29 +93,34 @@ it, including ones plugged in after the container start. The container user need
 
 ### Keyboard teleop
 
-`keyboard_teleop_tty` of the `rto_teleop` package reads keys in the terminal, so it is started with
-`ros2 run` together with the [safety layer](#teleop-safety):
+`keyboard_teleop` of the `rto_teleop` package opens a small window and drives the robot while it has the
+keyboard focus. Start it together with the [safety layer](#teleop-safety):
 ```bash
 ros2 launch rto_bringup teleop_safety_launch.py   # use_sim_time:=true for the simulation
-ros2 run rto_teleop keyboard_teleop_tty           # in another terminal
+ros2 run rto_teleop keyboard_teleop               # in another terminal
 ```
-`joy_teleop_launch.py` starts the safety layer too, so with it running only `keyboard_teleop_tty` is needed.
+`joy_teleop_launch.py` starts the safety layer too, so with it running only `keyboard_teleop` is needed.
 
 | Key | Action |
 | --- | --- |
-| `w` / `s` | Forward / backward |
-| `a` / `d` | Left / right |
-| `q` / `e` | Rotate left / right |
-| Shift + key | Turbo |
+| `W` / `S` | Forward / backward |
+| `A` / `D` | Left / right |
+| `Q` / `E` | Rotate left / right |
+| Shift | Turbo |
 | Space | Stop |
 | Ctrl+R | Reset the emergency stop |
-| Ctrl+C | Quit |
 
-The robot moves only while a key is held: the terminal repeats a held key, and the robot stops 0.15 s
-after the repeats stop (0.6 s after the first press, to wait for the autorepeat delay). A terminal reports
-only the last held key, so keys are not combined.
+Held keys are combined: `W`+`Q` drives an arc, `W`+`D` drives diagonally (at the same speed as straight),
+opposite keys cancel each other. The robot moves only while keys are held and stops when the window loses
+focus. Keys are recognized by their position, so they work with any keyboard layout. The window shows the
+command and the state of the emergency stop.
 
-The node publishes to `/robotino/cmd_vel_teleop`; without the safety layer run it with
+Without a display (e.g. over SSH) use the terminal version `ros2 run rto_teleop keyboard_teleop_tty`
+with the same keys (lowercase, Shift + key for turbo) and Ctrl+C to quit. A terminal reports only the
+last held key, so keys are not combined there: the robot moves while the terminal repeats the key and stops
+0.15 s after the repeats stop (0.6 s after the first press, to wait for the autorepeat delay).
+
+Both nodes publish to `/robotino/cmd_vel_teleop`; without the safety layer run them with
 `--ros-args -r /robotino/cmd_vel_teleop:=/robotino/cmd_vel`.
 
 | Parameter | Default | Description |
@@ -123,7 +128,8 @@ The node publishes to `/robotino/cmd_vel_teleop`; without the safety layer run i
 | `linear_speed` | `0.2` | Linear speed [m/s] |
 | `angular_speed` | `0.6` | Angular speed [rad/s] |
 | `turbo_scale` | `2.0` | Speed factor with Shift |
-| `key_timeout`, `first_key_timeout` | `0.15`, `0.6` | Stop if no key repeat comes within this time [s] |
+| `rate` | `20.0` | Rate of commands while keys are held [Hz] |
+| `key_timeout`, `first_key_timeout` | `0.15`, `0.6` | `keyboard_teleop_tty` only: stop if no key repeat comes within this time [s] |
 
 ### Teleop safety
 
@@ -145,7 +151,7 @@ teleop -> /robotino/cmd_vel_teleop -> teleop_safety -> /robotino/cmd_vel_safe
   Without laser scans for 1 s collision_monitor stops the robot.
 - **Emergency stop**: when the bumper is pressed, `teleop_safety` stops the robot and drops all commands
   until the emergency stop is reset by holding Back + Start of the gamepad for 1 s, Ctrl+R in
-  `keyboard_teleop_tty` or
+  `keyboard_teleop` / `keyboard_teleop_tty` or
   `ros2 service call /robotino/safety/reset std_srvs/srv/Trigger`. After a reset the robot can move away
   while the bumper is still pressed; commands pass after the first zero command, so a deflected stick
   does not jerk the robot.
