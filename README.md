@@ -8,6 +8,51 @@ The original code was taken from [dietriro's robotino repository](https://github
 
 **Note:** Not all functionality has been enabled. North Star support, BHA support, and gripper support have been disabled.
 
+## Running in Docker
+
+The quickest way to use the packages: [compose.yaml](compose.yaml) builds an image with ROS 2, Robotino API2
+and this workspace ([docker/Dockerfile](docker/Dockerfile)) and runs commands in it. For development use
+the [dev container](#development-in-a-dev-container-recommended) instead.
+
+Host requirements:
+- Linux with X11, amd64 (Robotino API2 is available only for amd64)
+- [Docker Engine](https://docs.docker.com/engine/install/ubuntu/) with the Compose plugin
+  (`docker compose version` should work)
+
+Setup:
+```bash
+git clone https://github.com/BrOleg5/robotino-ros2.git
+cd robotino-ros2
+docker compose build  # takes a while; rerun after updating the repository
+```
+
+Run any command from [Usage](#usage) with `docker compose run --rm robotino <command>` in the repository
+directory. Allow the container to open windows (RViz, Gazebo, keyboard teleop) once per login session:
+`xhost +local:docker`. Examples:
+```bash
+# Real robot
+docker compose run --rm robotino ros2 launch rto_bringup rto_bringup_launch.py hostname:=<robotino ip address> robot_model:=robotino3
+docker compose run --rm robotino ros2 launch rto_bringup rto_rviz_launch.py
+docker compose run --rm robotino ros2 launch rto_bringup joy_teleop_launch.py
+
+# Simulation
+docker compose run --rm robotino ros2 launch robotino_gazebo gazebo_sim.launch.py robot_model:=robotino4
+
+# Interactive shell with the workspace sourced
+docker compose run --rm robotino
+```
+
+Each command runs in its own container; they see each other and other ROS 2 nodes on the network,
+because the containers use the host network. Notes:
+- Settings are taken from environment variables of the host (or an `.env` file next to `compose.yaml`):
+  - `ROS_DOMAIN_ID` (default `0`): ROS 2 domain;
+  - `ROBOTINO_ROS_DISTRO` (default `lyrical`): ROS 2 distribution of the image, `lyrical` or `jazzy`;
+    run `docker compose build` after changing it.
+- Gamepads connected to the host (also later) are available in the container.
+- RViz and Gazebo render on Intel/AMD GPUs through `/dev/dri`. With an NVIDIA GPU install the
+  [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
+  and add the override file: `docker compose -f compose.yaml -f docker/compose.nvidia.yaml run --rm robotino <command>`.
+
 ## Development in a dev container (recommended)
 
 The [.devcontainer](.devcontainer) directory provides an image with ROS 2, Robotino API2 and all build dependencies.
@@ -30,21 +75,42 @@ Usage:
 
 ## Installation without a container
 
-On Ubuntu 26.04 with ROS 2 Lyrical (or Ubuntu 24.04 with ROS 2 Jazzy):
-- Download `robotino-dev`, `rec-rpc` and `robotino-api2` .deb files for Ubuntu 20.04 from the
-  [Robotino OS page](https://wiki.openrobotino.org/index.php?title=Robotino_OS).
-- These packages depend on `libqt5core5a`, `libqt5network5`, `libqt5xml5`, `libqt5gui5`, which are named
-  `libqt5core5t64`, `libqt5network5t64`, `libqt5xml5t64`, `libqt5gui5t64` in newer Ubuntu releases.
-  Rewrite the `Depends` field before installing, as done in [.devcontainer/Dockerfile](.devcontainer/Dockerfile):
-  ```bash
-  dpkg-deb -R robotino-api2_1.1.14_amd64.deb robotino-api2
-  sed -i -E '/^Depends:/ { s/libqt5core5a\b/libqt5core5t64/; s/libqt5(gui5|network5|xml5)\b/libqt5\1t64/g }' robotino-api2/DEBIAN/control
-  dpkg-deb -b robotino-api2 robotino-api2_1.1.14_amd64_fixed.deb
-  sudo apt install ./robotino-api2_1.1.14_amd64_fixed.deb
-  ```
-- Clone this repo into the `src` directory of a ROS 2 workspace, then run
-  `rosdep install --from-paths src --ignore-src -y` and `colcon build`.
-- Source the workspace.
+Requirements: Ubuntu 26.04 with ROS 2 Lyrical or Ubuntu 24.04 with ROS 2 Jazzy, amd64
+(Robotino API2 is available only for amd64).
+
+1. Install ROS 2 following the official guide
+   ([Lyrical](https://docs.ros.org/en/lyrical/Get-Started/Installation/Ubuntu-Install-Debs.html),
+   [Jazzy](https://docs.ros.org/en/jazzy/Installation/Ubuntu-Install-Debs.html)),
+   the `ros-<distro>-desktop` variant is enough.
+2. Create a workspace and clone this repository into it:
+   ```bash
+   mkdir -p ~/ws/src && cd ~/ws/src
+   git clone https://github.com/BrOleg5/robotino-ros2.git
+   ```
+3. Install the dependencies:
+   ```bash
+   source /opt/ros/<distro>/setup.bash
+   ~/ws/src/robotino-ros2/scripts/install_dependencies.sh
+   ```
+   The script (uses `sudo`):
+   - downloads `rec-rpc`, `robotino-dev` and `robotino-api2` from the
+     [openrobotino.org package repository](https://packages2.openrobotino.org/pool/focal/main/r/)
+     and checks their SHA-256 sums;
+   - rewrites their `Depends` field: the packages are built for Ubuntu 20.04 and depend on `libqt5core5a`,
+     `libqt5gui5`, `libqt5network5`, `libqt5xml5`, which are named `libqt5core5t64`, `libqt5gui5t64`,
+     `libqt5network5t64`, `libqt5xml5t64` in Ubuntu 24.04 and newer;
+   - installs them to `/opt/robotino` and checks that `librec_robotino_api2.so` resolves all its libraries;
+   - initializes rosdep if needed and installs the ROS dependencies of all packages in this repository.
+
+   Run `install_dependencies.sh --help` for options (`--api2-only`, `--rosdistro <distro>`).
+   The [dev container](.devcontainer/Dockerfile) installs Robotino API2 with the same script.
+4. Build and source the workspace:
+   ```bash
+   cd ~/ws
+   colcon build --symlink-install
+   source install/setup.bash
+   ```
+   Add `source ~/ws/install/setup.bash` to `~/.bashrc` to make it permanent.
 
 ## Usage
 - To bring up the robot, use `ros2 launch rto_bringup rto_bringup_launch.py hostname:=<robotino ip address> robot_model:=robotino3`

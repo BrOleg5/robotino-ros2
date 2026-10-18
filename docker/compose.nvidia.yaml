@@ -1,0 +1,16 @@
+# Renders OpenGL on an NVIDIA GPU, requires the NVIDIA Container Toolkit. Usage:
+# docker compose -f compose.yaml -f docker/compose.nvidia.yaml run --rm robotino <command>
+services:
+  robotino:
+    environment:
+      NVIDIA_DRIVER_CAPABILITIES: all
+      # Render on the NVIDIA GPU on hybrid-graphics laptops (PRIME on-demand mode).
+      __NV_PRIME_RENDER_OFFLOAD: "1"
+      __GLX_VENDOR_LIBRARY_NAME: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

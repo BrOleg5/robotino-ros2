@@ -2,6 +2,8 @@
     "name": "robotino-ros2",
     "build": {
         "dockerfile": "Dockerfile",
+        // The repository root is the build context: the image uses scripts/install_dependencies.sh.
+        "context": "..",
         // Robotino API2 is only available for amd64.
         "options": ["--platform=linux/amd64"],
         "args": {
