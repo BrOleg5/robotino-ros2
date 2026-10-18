@@ -1,3 +1,8 @@
-# Only scripts/ is needed to build the dev container image.
-*
-!scripts/
+# Not needed in the images (the dev container image uses only scripts/).
+.git
+.devcontainer
+.vscode
+build
+install
+log
+**/__pycache__

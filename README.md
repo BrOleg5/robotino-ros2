@@ -8,6 +8,51 @@ The original code was taken from [dietriro's robotino repository](https://github
 
 **Note:** Not all functionality has been enabled. North Star support, BHA support, and gripper support have been disabled.
 
+## Running in Docker
+
+The quickest way to use the packages: [compose.yaml](compose.yaml) builds an image with ROS 2, Robotino API2
+and this workspace ([docker/Dockerfile](docker/Dockerfile)) and runs commands in it. For development use
+the [dev container](#development-in-a-dev-container-recommended) instead.
+
+Host requirements:
+- Linux with X11, amd64 (Robotino API2 is available only for amd64)
+- [Docker Engine](https://docs.docker.com/engine/install/ubuntu/) with the Compose plugin
+  (`docker compose version` should work)
+
+Setup:
+```bash
+git clone https://github.com/BrOleg5/robotino-ros2.git
+cd robotino-ros2
+docker compose build  # takes a while; rerun after updating the repository
+```
+
+Run any command from [Usage](#usage) with `docker compose run --rm robotino <command>` in the repository
+directory. Allow the container to open windows (RViz, Gazebo, keyboard teleop) once per login session:
+`xhost +local:docker`. Examples:
+```bash
+# Real robot
+docker compose run --rm robotino ros2 launch rto_bringup rto_bringup_launch.py hostname:=<robotino ip address> robot_model:=robotino3
+docker compose run --rm robotino ros2 launch rto_bringup rto_rviz_launch.py
+docker compose run --rm robotino ros2 launch rto_bringup joy_teleop_launch.py
+
+# Simulation
+docker compose run --rm robotino ros2 launch robotino_gazebo gazebo_sim.launch.py robot_model:=robotino4
+
+# Interactive shell with the workspace sourced
+docker compose run --rm robotino
+```
+
+Each command runs in its own container; they see each other and other ROS 2 nodes on the network,
+because the containers use the host network. Notes:
+- Settings are taken from environment variables of the host (or an `.env` file next to `compose.yaml`):
+  - `ROS_DOMAIN_ID` (default `0`): ROS 2 domain;
+  - `ROBOTINO_ROS_DISTRO` (default `lyrical`): ROS 2 distribution of the image, `lyrical` or `jazzy`;
+    run `docker compose build` after changing it.
+- Gamepads connected to the host (also later) are available in the container.
+- RViz and Gazebo render on Intel/AMD GPUs through `/dev/dri`. With an NVIDIA GPU install the
+  [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
+  and add the override file: `docker compose -f compose.yaml -f docker/compose.nvidia.yaml run --rm robotino <command>`.
+
 ## Development in a dev container (recommended)
 
 The [.devcontainer](.devcontainer) directory provides an image with ROS 2, Robotino API2 and all build dependencies.

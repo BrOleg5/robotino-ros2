@@ -1,0 +1,35 @@
+# Runs robotino-ros2 in Docker, see "Running in Docker" in README.md.
+# Example: docker compose run --rm robotino ros2 launch rto_bringup rto_bringup_launch.py hostname:=<ip>
+services:
+  robotino:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        ROS_DISTRO: ${ROBOTINO_ROS_DISTRO:-lyrical}
+    image: robotino-ros2:${ROBOTINO_ROS_DISTRO:-lyrical}
+    # Robotino API2 is only available for amd64.
+    platform: linux/amd64
+    # Host network: DDS discovery and access to the Robotino by IP.
+    network_mode: host
+    ipc: host
+    stdin_open: true
+    tty: true
+    environment:
+      DISPLAY: ${DISPLAY:-:0}
+      QT_X11_NO_MITSHM: "1"
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-0}
+      RCUTILS_COLORIZED_OUTPUT: "1"
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      # Gamepads: input devices of the host and udev events for hotplug.
+      - /dev/input:/dev/input
+      - /run/udev:/run/udev:ro
+      # GPU for OpenGL in RViz and Gazebo (Intel/AMD; for NVIDIA see docker/compose.nvidia.yaml).
+      # A bind mount (unlike "devices") keeps the ACLs that grant the logged-in user access.
+      - /dev/dri:/dev/dri
+    # Access to input devices (major number 13), including gamepads plugged in later,
+    # and to the GPU (major number 226).
+    device_cgroup_rules:
+      - "c 13:* rmw"
+      - "c 226:* rmw"
