@@ -1,0 +1,15 @@
+# colcon build artifacts (in case the repo is built in place)
+build/
+install/
+log/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Editors / IDEs
+.vscode/
+*.swp
+*~
