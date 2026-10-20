@@ -1,4 +1,5 @@
-# Gripper and status LEDs connected to the I/O interface of Robotino (package rto_io).
+# Gripper and status LEDs connected to the I/O interface of Robotino (package rto_io) and
+# gamepad control of the gripper (gripper_joy of rto_teleop).
 # The defaults are the wiring of the Robotino View program gamepad_control_gripper_safety.rvwx.
 #
 # Channels are named by their labels on the I/O interface connector:
@@ -34,3 +35,9 @@
     leds_active_low: false
     # Period of repeating the state of the LEDs [s], 0.0: publish only on change
     refresh_period: 1.0
+
+/**/gripper_joy:
+  ros__parameters:
+    # SDL GameController layout of joy's game_controller_node, as in joy_teleop.yaml
+    open_button: 1  # B
+    close_button: 0  # A

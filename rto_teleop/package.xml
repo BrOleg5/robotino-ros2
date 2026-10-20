@@ -3,7 +3,7 @@
 <package format="3">
   <name>rto_teleop</name>
   <version>0.0.0</version>
-  <description>Keyboard teleoperation of Robotino and the safety layer of teleoperation</description>
+  <description>Keyboard teleoperation of Robotino, gamepad control of the gripper and the safety layer of teleoperation</description>
   <maintainer email="karahul209@gmail.com">rahul</maintainer>
   <license>TODO: License declaration</license>
 

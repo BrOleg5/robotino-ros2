@@ -129,8 +129,8 @@ Requirements: Ubuntu 26.04 with ROS 2 Lyrical or Ubuntu 24.04 with ROS 2 Jazzy, 
 ### Gamepad teleop
 
 `ros2 launch rto_bringup joy_teleop_launch.py` starts `game_controller_node` of the `joy` package,
-`teleop_twist_joy` and the [safety layer](#teleop-safety). It works with the real robot and the simulation
-alike (add `use_sim_time:=true` for the simulation).
+`teleop_twist_joy`, the [safety layer](#teleop-safety) and the [gripper with the status LEDs](#gripper-and-status-leds).
+It works with the real robot and the simulation alike (add `use_sim_time:=true` for the simulation).
 
 | Control | Action |
 | --- | --- |
@@ -139,6 +139,7 @@ alike (add `use_sim_time:=true` for the simulation).
 | Left stick | Drive forward/backward and sideways |
 | Right stick, horizontal | Rotate |
 | Back + Start (hold 1 s) | Reset the emergency stop |
+| B / A | Open / close the gripper |
 
 | Argument | Default | Description |
 | --- | --- | --- |
@@ -146,6 +147,8 @@ alike (add `use_sim_time:=true` for the simulation).
 | `joy_vel` | `""` | Topic of velocity commands, empty: `/robotino/cmd_vel_teleop` with the safety layer, `/robotino/cmd_vel` without it |
 | `safety` | `true` | Start the [safety layer](#teleop-safety) |
 | `laser` | `true` | The safety layer uses the laser scan; `false` for a robot without the laser |
+| `gripper` | `true` | Start the [gripper and the status LEDs](#gripper-and-status-leds) and control the gripper with B / A |
+| `gripper_params_file` | [rto_bringup/config/gripper.yaml](rto_bringup/config/gripper.yaml) | Channels of the gripper and the LEDs, gamepad buttons of the gripper |
 | `use_sim_time` | `false` | `true` for the simulation |
 | `config_filepath` | `rto_bringup/config/joy_teleop.yaml` | Axes, buttons and speed scales |
 
