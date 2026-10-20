@@ -144,6 +144,7 @@ alike (add `use_sim_time:=true` for the simulation).
 | `joy_dev` | `0` | Gamepad device id, if several gamepads are connected |
 | `joy_vel` | `""` | Topic of velocity commands, empty: `/robotino/cmd_vel_teleop` with the safety layer, `/robotino/cmd_vel` without it |
 | `safety` | `true` | Start the [safety layer](#teleop-safety) |
+| `laser` | `true` | The safety layer uses the laser scan; `false` for a robot without the laser |
 | `use_sim_time` | `false` | `true` for the simulation |
 | `config_filepath` | `rto_bringup/config/joy_teleop.yaml` | Axes, buttons and speed scales |
 
@@ -214,7 +215,9 @@ teleop -> /robotino/cmd_vel_teleop -> teleop_safety -> /robotino/cmd_vel_safe
   a wall; rotation in place is never limited (the robot is round).
 - Obstacles are taken from the laser scan `/laser_scan` and the IR sensors `/robotino/ir0..8`. The laser
   sees 240° ahead; behind the robot only the IR sensors see obstacles, up to 30 cm from the body.
-  Without laser scans for 1 s collision_monitor stops the robot.
+  Without laser scans for 1 s collision_monitor stops the robot ("Robot to stop due to invalid source"
+  in its log). On a robot without the laser start the safety layer with `laser:=false`: then only the IR
+  sensors see obstacles, up to 30 cm from the body, so the slow zone works only near obstacles.
 - **Emergency stop**: when the bumper is pressed, `teleop_safety` stops the robot and drops all commands
   until the emergency stop is reset by holding Back + Start of the gamepad for 1 s, Ctrl+R in
   `keyboard_teleop` / `keyboard_teleop_tty` or
@@ -237,6 +240,7 @@ current zones (group **Safety zones**).
 | Argument | Default | Description |
 | --- | --- | --- |
 | `params_file` | [rto_bringup/config/teleop_safety.yaml](rto_bringup/config/teleop_safety.yaml) | collision_monitor and teleop_safety parameters: speed limits, sensors, reset buttons |
+| `laser` | `true` | Use the laser scan; `false` for a robot without the laser |
 | `stop_distance` | `0.075` | Stop zone around the body [m] |
 | `slow_distance` | `0.425` | Slow zone around the body [m] |
 | `use_sim_time` | `false` | `true` for the simulation |

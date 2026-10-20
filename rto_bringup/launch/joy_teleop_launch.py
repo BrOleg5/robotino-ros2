@@ -50,6 +50,12 @@ def generate_launch_description():
             description='Start the safety layer: slowdown near obstacles and emergency stop',
         ),
         DeclareLaunchArgument(
+            'laser',
+            default_value='true',
+            choices=['true', 'false'],
+            description='Safety layer uses the laser scan, false for a robot without the laser',
+        ),
+        DeclareLaunchArgument(
             'use_sim_time',
             default_value='false',
             choices=['true', 'false'],
@@ -79,7 +85,10 @@ def generate_launch_description():
             PythonLaunchDescriptionSource(os.path.join(
                 get_package_share_path('rto_bringup'), 'teleop_safety_launch.py'
             )),
-            launch_arguments={'use_sim_time': LaunchConfiguration('use_sim_time')}.items(),
+            launch_arguments={
+                'use_sim_time': LaunchConfiguration('use_sim_time'),
+                'laser': LaunchConfiguration('laser'),
+            }.items(),
             condition=IfCondition(LaunchConfiguration('safety')),
         ),
     ])
