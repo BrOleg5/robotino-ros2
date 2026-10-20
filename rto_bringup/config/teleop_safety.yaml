@@ -116,6 +116,11 @@ teleop_safety:
   ros__parameters:
     reset_buttons: [4, 6]  # Back + Start in the SDL layout of joy's game_controller_node
     reset_hold_time: 1.0
+    # Allow only backward motion while a roller lever switch of the gripper is pressed
+    # (/robotino/gripper/contact of the gripper node, see gripper.yaml)
+    backward_only_on_contact: true
+    # /robotino/safety/motion_blocked is reset if no blocked command comes within this time [s]
+    motion_blocked_timeout: 0.5
 
 lifecycle_manager_teleop_safety:
   ros__parameters:

@@ -230,6 +230,10 @@ teleop -> /robotino/cmd_vel_teleop -> teleop_safety -> /robotino/cmd_vel_safe
   `ros2 service call /robotino/safety/reset std_srvs/srv/Trigger`. After a reset the robot can move away
   while the bumper is still pressed; commands pass after the first zero command, so a deflected stick
   does not jerk the robot.
+- **Contact**: while a roller lever switch of the [gripper](#gripper-and-status-leds) is pressed, the robot
+  may only move backward to get away from the obstacle: forward and sideways motion and rotation are dropped
+  from the commands (`backward_only_on_contact` in `teleop_safety.yaml`). While the operator tries such
+  motion, `/robotino/safety/motion_blocked` is true.
 
 The zones depend on the direction of the commanded velocity: `teleop_safety_launch.py` generates
 `velocity_polygon`s of collision_monitor for 24 directions. RViz (`rto_config.rviz`, `sim.rviz`) shows the
@@ -240,6 +244,7 @@ current zones (group **Safety zones**).
 | `/robotino/cmd_vel_teleop` | `geometry_msgs/Twist` | Commands of the teleop |
 | `/robotino/safety/emergency_stop` | `std_msgs/Bool` | Emergency stop is active, transient local |
 | `/robotino/safety/reset` | `std_srvs/Trigger` (service) | Reset the emergency stop |
+| `/robotino/safety/motion_blocked` | `std_msgs/Bool` | On contact of the gripper the operator tries to move other than backward, transient local |
 | `/collision_monitor_state` | `nav2_msgs/CollisionMonitorState` | Current action of collision_monitor |
 | `/collision_monitor/stop_zone`, `/collision_monitor/slow_zone` | `geometry_msgs/PolygonStamped` | Current zones |
 
