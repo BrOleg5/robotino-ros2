@@ -36,18 +36,22 @@ amcl:
     z_short: 0.05
     sigma_hit: 0.2
 
+    # Enough particles to cover the whole map after global localization
     min_particles: 500
-    max_particles: 2000
+    max_particles: 5000
     pf_err: 0.05
     pf_z: 0.99
-    recovery_alpha_fast: 0.0
-    recovery_alpha_slow: 0.0
+    # Inject random particles when the scans match the map worse than on average,
+    # so the filter recovers from a wrong pose
+    recovery_alpha_fast: 0.1
+    recovery_alpha_slow: 0.001
     resample_interval: 1
     # Filter update after the robot moves 0.1 m or 0.1 rad
     update_min_d: 0.1
     update_min_a: 0.1
 
-    # The robot is expected to start at the map origin, otherwise use "2D Pose Estimate" in RViz
+    # The robot is expected to start at the map origin, otherwise use "2D Pose Estimate" in RViz.
+    # amcl_launch.py global_localization:=true overrides it with false and spreads the particles over the map
     set_initial_pose: true
     initial_pose:
       x: 0.0

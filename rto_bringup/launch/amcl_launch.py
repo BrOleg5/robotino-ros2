@@ -2,7 +2,7 @@ import os
 
 from ament_index_python.packages import get_package_share_path
 from launch import LaunchContext, LaunchDescription
-from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch.actions import DeclareLaunchArgument, ExecuteProcess, OpaqueFunction
 from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
@@ -18,8 +18,11 @@ def launch_localization(context: LaunchContext):
 
     params_file = LaunchConfiguration('params_file')
     use_sim_time = {'use_sim_time': LaunchConfiguration('use_sim_time')}
+    global_localization = context.perform_substitution(
+        LaunchConfiguration('global_localization')) == 'true'
+    amcl_overrides = {'set_initial_pose': False} if global_localization else {}
 
-    return [
+    actions = [
         Node(
             package='nav2_map_server',
             executable='map_server',
@@ -32,7 +35,7 @@ def launch_localization(context: LaunchContext):
             executable='amcl',
             name='amcl',
             output='screen',
-            parameters=[params_file, use_sim_time],
+            parameters=[params_file, use_sim_time, amcl_overrides],
         ),
         # map_server and amcl are lifecycle nodes: configure and activate them
         Node(
@@ -43,6 +46,16 @@ def launch_localization(context: LaunchContext):
             parameters=[params_file, use_sim_time],
         ),
     ]
+    if global_localization:
+        # Spread the particles over the free space of the map once amcl is active
+        # (it has received the map by then: map_server is activated first)
+        actions.append(ExecuteProcess(
+            cmd=['bash', '-c',
+                 'until ros2 lifecycle get /amcl 2>/dev/null | grep -q "^active"; do sleep 1; done; '
+                 'ros2 service call /reinitialize_global_localization std_srvs/srv/Empty'],
+            output='screen',
+        ))
+    return actions
 
 
 def generate_launch_description():
@@ -66,6 +79,12 @@ def generate_launch_description():
             default_value='false',
             choices=['true', 'false'],
             description='Use the Gazebo clock, true for the simulation',
+        ),
+        DeclareLaunchArgument(
+            'global_localization',
+            default_value='false',
+            choices=['true', 'false'],
+            description='Spread the particles over the whole map instead of the initial pose',
         ),
         DeclareLaunchArgument(
             'rviz',
