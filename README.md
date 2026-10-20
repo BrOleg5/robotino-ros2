@@ -6,7 +6,8 @@ Supported ROS 2 distributions: **Lyrical** (default, Ubuntu 26.04) and **Jazzy**
 
 The original code was taken from [dietriro's robotino repository](https://github.com/dietriro/rto_core) and adapted for ROS2
 
-**Note:** Not all functionality has been enabled. North Star support, BHA support, and gripper support have been disabled.
+**Note:** Not all functionality has been enabled. North Star support and BHA support have been disabled.
+The gripper is supported when it is connected to the [I/O interface](#gripper-and-status-leds).
 
 ## Running in Docker
 
@@ -291,6 +292,51 @@ ros2 topic pub --once /robotino/gpio_commands control_msgs/msg/DynamicInterfaceG
   "{interface_groups: [digital_outputs, relays],
     interface_values: [{interface_names: [DQ1], values: [1.0]}, {interface_names: [R2], values: [1.0]}]}"
 ```
+
+### Gripper and status LEDs
+
+`gripper_launch.py` (started by `joy_teleop_launch.py` by default) starts two nodes of the `rto_io` package
+that work with the gripper and the status LEDs connected to the [I/O interface](#io-interface):
+```bash
+ros2 launch rto_bringup gripper_launch.py
+```
+
+- `gripper` opens and closes the gripper by two outputs and reports the states of its sensors. It checks
+  interlocks: the gripper opens only on contact of a roller lever switch and when it is not open yet; it closes
+  only when it is open, on contact and with an object between the fingers. A refused command returns
+  `success: false` with the reason.
+- `status_leds`: green in normal operation; red when collision_monitor slows down or stops the robot;
+  blue when the gripper is ready to grip (contact and an object between the fingers). During an emergency
+  stop only the red LED is on. The LEDs are switched off when the node stops.
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `/robotino/gripper/open`, `/robotino/gripper/close` | `std_srvs/Trigger` (service) | Open / close the gripper |
+| `/robotino/gripper/is_open` | `std_msgs/Bool` | The gripper is open, transient local |
+| `/robotino/gripper/object_detected` | `std_msgs/Bool` | An object is between the fingers, transient local |
+| `/robotino/gripper/contact` | `std_msgs/Bool` | A roller lever switch is pressed, transient local |
+
+The wiring is set in [rto_bringup/config/gripper.yaml](rto_bringup/config/gripper.yaml); the defaults are the
+wiring of the Robotino View program `gamepad_control_gripper_safety.rvwx`:
+
+| Parameter | Default | Description |
+| --- | --- | --- |
+| `open_output`, `close_output` | `DQ1`, `DQ2` | Outputs opening / closing the gripper (`DQ1`..`DQ8`, `R1`, `R2`) |
+| `outputs_active_low` | `false` | The outputs are active at 0 |
+| `pulse_duration` | `0.1` | Pulse on the output [s]; `0.0`: keep it on until the next command |
+| `open_sensor` | `DI1` | The gripper is open, `active_low: false` |
+| `object_sensor` | `DI2` | An object is between the fingers, `active_low: true` |
+| `contact_sensors` | `[DI3, DI4]` | Roller lever switches, contact if any is pressed, `active_low: true` |
+| `require_contact`, `require_object_to_close` | `true`, `true` | Interlocks |
+| `red_led`, `green_led`, `blue_led` | `DQ4`, `DQ5`, `DQ6` | Outputs of the LEDs (`status_leds`) |
+| `leds_active_low` | `false` | The LEDs are on at 0 |
+
+An empty channel (`""`, `[""]` for `contact_sensors`) means that the signal is not connected; the interlocks
+using a missing sensor are skipped. For example, a gripper on the relays without the open sensor:
+```bash
+ros2 launch rto_bringup joy_teleop_launch.py gripper_params_file:=/path/to/my_gripper.yaml
+```
+with `open_output: "R1"`, `close_output: "R2"`, `open_sensor: ""` in the copy of `gripper.yaml`.
 
 ### Camera
 
