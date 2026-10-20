@@ -2,7 +2,8 @@
 Keyboard teleoperation of the omnidirectional base of Robotino in a terminal.
 
 The robot moves while a key is held: the terminal repeats a held key, and the robot stops when
-the repeats stop. Ctrl+R resets the emergency stop of teleop_safety.
+the repeats stop. Ctrl+R resets the emergency stop of teleop_safety, o / c open / close the
+gripper (gripper node of rto_io).
 """
 
 import select
@@ -28,6 +29,7 @@ Robotino keyboard teleop. Hold a key to move:
   Shift (W A S D Q E) : turbo
   Space : stop
   Ctrl+R : reset the emergency stop
+  o / c : open / close the gripper
   Ctrl+C : quit
 """
 
@@ -42,6 +44,7 @@ MOVE_KEYS = {
 }
 KEY_STOP = ' '
 KEY_RESET = '\x12'  # Ctrl+R
+GRIPPER_KEYS = {'o': 'open', 'c': 'close'}
 
 
 class KeyboardTeleop(Node):
@@ -62,6 +65,14 @@ class KeyboardTeleop(Node):
         self.create_subscription(
             Bool, '/robotino/safety/emergency_stop', self.estop_callback,
             QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL))
+
+        self.gripper_clients = {
+            action: self.create_client(Trigger, f'/robotino/gripper/{action}')
+            for action in GRIPPER_KEYS.values()
+        }
+        self.gripper_future = None
+        self.gripper_key = None
+        self.gripper_key_time = 0.0
 
         self.key = None
         self.first_key_time = 0.0
@@ -91,6 +102,20 @@ class KeyboardTeleop(Node):
         future = self.reset_client.call_async(Trigger.Request())
         future.add_done_callback(self.reset_done)
 
+    def request_gripper(self, action: str):
+        client = self.gripper_clients[action]
+        if not client.service_is_ready():
+            print('\r\nThe gripper node is not running\r')
+            return
+        if self.gripper_future is not None and not self.gripper_future.done():
+            return
+        self.gripper_future = client.call_async(Trigger.Request())
+        self.gripper_future.add_done_callback(self.gripper_done)
+
+    def gripper_done(self, future):
+        result = future.result()
+        print(f'\r\n{result.message if result else "Gripper command failed"}\r')
+
     def reset_done(self, future):
         result = future.result()
         print(f'\r\n{result.message if result else "Reset failed"}\r')
@@ -103,6 +128,14 @@ class KeyboardTeleop(Node):
             self.request_reset()
         elif key == KEY_STOP:
             self.stop()
+        elif key.lower() in GRIPPER_KEYS:
+            # A held key is repeated by the terminal: send one command per press
+            repeated = (key == self.gripper_key
+                        and now - self.gripper_key_time < self.first_key_timeout)
+            self.gripper_key = key
+            self.gripper_key_time = now
+            if not repeated:
+                self.request_gripper(GRIPPER_KEYS[key.lower()])
         elif key.lower() in MOVE_KEYS:
             if key != self.key or now - self.last_key_time > self.first_key_timeout:
                 # A new key press: the terminal starts repeating it after the autorepeat delay

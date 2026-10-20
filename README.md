@@ -180,11 +180,13 @@ ros2 run rto_teleop keyboard_teleop               # in another terminal
 | Shift | Turbo |
 | Space | Stop |
 | Ctrl+R | Reset the emergency stop |
+| `O` / `C` | Open / close the [gripper](#gripper-and-status-leds) |
 
 Held keys are combined: `W`+`Q` drives an arc, `W`+`D` drives diagonally (at the same speed as straight),
 opposite keys cancel each other. The robot moves only while keys are held and stops when the window loses
 focus. Keys are recognized by their position, so they work with any keyboard layout. The window shows the
-command and the state of the emergency stop.
+command, the state of the emergency stop and the states of the gripper sensors. A held `O` / `C` sends one
+command to the gripper.
 
 Without a display (e.g. over SSH) use the terminal version `ros2 run rto_teleop keyboard_teleop_tty`
 with the same keys (lowercase, Shift + key for turbo) and Ctrl+C to quit. A terminal reports only the
