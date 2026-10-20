@@ -20,6 +20,7 @@ setup(
     entry_points={
         'console_scripts': [
             'gripper = rto_io.gripper:main',
+            'status_leds = rto_io.status_leds:main',
         ],
     },
 )
