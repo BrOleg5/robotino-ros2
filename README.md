@@ -233,7 +233,7 @@ teleop -> /robotino/cmd_vel_teleop -> teleop_safety -> /robotino/cmd_vel_safe
 - **Contact**: while a roller lever switch of the [gripper](#gripper-and-status-leds) is pressed, the robot
   may only move backward to get away from the obstacle: forward and sideways motion and rotation are dropped
   from the commands (`backward_only_on_contact` in `teleop_safety.yaml`). While the operator tries such
-  motion, `/robotino/safety/motion_blocked` is true.
+  motion, `/robotino/safety/motion_blocked` is true and the status LEDs light yellow.
 
 The zones depend on the direction of the commanded velocity: `teleop_safety_launch.py` generates
 `velocity_polygon`s of collision_monitor for 24 directions. RViz (`rto_config.rviz`, `sim.rviz`) shows the
@@ -316,8 +316,9 @@ ros2 launch rto_bringup gripper_launch.py
   only when it is open, on contact and with an object between the fingers. A refused command returns
   `success: false` with the reason.
 - `status_leds`: green in normal operation; red when collision_monitor slows down or stops the robot;
-  blue when the gripper is ready to grip (contact and an object between the fingers). During an emergency
-  stop only the red LED is on. The LEDs are switched off when the node stops.
+  blue when the gripper is ready to grip (contact and an object between the fingers); yellow (red and green)
+  when on contact the operator tries to move other than backward. During an emergency stop only the red LED
+  is on. The LEDs are switched off when the node stops.
 
 | Name | Type | Description |
 | --- | --- | --- |

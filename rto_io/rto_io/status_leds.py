@@ -6,6 +6,8 @@ gamepad_control_gripper_safety.rvwx did:
 - green: normal operation;
 - red: an obstacle limits the speed or stops the robot (collision_monitor is active);
 - blue: ready to grip, a roller lever switch is pressed and an object is between the fingers;
+- yellow (red and green): a roller lever switch is pressed and the operator tries to move
+  forward, sideways or rotate; only backward motion is allowed (teleop_safety);
 - emergency stop: only the red LED is on.
 
 All channels and their polarity are parameters, an empty channel means that the LED is not
@@ -39,6 +41,7 @@ class StatusLeds(Node):
         self.get_logger().info(f'LEDs: red {self.red}, green {self.green}, blue {self.blue}')
 
         self.emergency_stop = False
+        self.motion_blocked = False
         self.obstacle = False
         self.contact = False
         self.object_detected = False
@@ -48,6 +51,8 @@ class StatusLeds(Node):
         latched = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
         self.create_subscription(
             Bool, 'safety/emergency_stop', self.emergency_stop_callback, latched)
+        self.create_subscription(
+            Bool, 'safety/motion_blocked', self.motion_blocked_callback, latched)
         self.create_subscription(
             CollisionMonitorState, 'collision_monitor_state', self.collision_monitor_callback, 10)
         self.create_subscription(Bool, 'gripper/contact', self.contact_callback, latched)
@@ -70,11 +75,17 @@ class StatusLeds(Node):
     def update(self):
         if self.emergency_stop:
             self.set_leds(True, False, False)
+        elif self.motion_blocked:
+            self.set_leds(True, True, False)
         else:
             self.set_leds(self.obstacle, True, self.contact and self.object_detected)
 
     def emergency_stop_callback(self, msg: Bool):
         self.emergency_stop = msg.data
+        self.update()
+
+    def motion_blocked_callback(self, msg: Bool):
+        self.motion_blocked = msg.data
         self.update()
 
     def collision_monitor_callback(self, msg: CollisionMonitorState):

@@ -29,6 +29,8 @@
 
 /**/status_leds:
   ros__parameters:
+    # Yellow is red and green: on contact of the roller lever switches the operator tries to move
+    # forward, sideways or rotate, only backward motion is allowed
     red_led: "DQ4"  # Emergency stop, or an obstacle slows down or stops the robot
     green_led: "DQ5"  # Normal operation
     blue_led: "DQ6"  # Ready to grip: contact and an object between the fingers
