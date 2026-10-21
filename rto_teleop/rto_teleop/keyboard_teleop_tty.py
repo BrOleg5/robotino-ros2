@@ -3,7 +3,9 @@ Keyboard teleoperation of the omnidirectional base of Robotino in a terminal.
 
 The robot moves while a key is held: the terminal repeats a held key, and the robot stops when
 the repeats stop. Ctrl+R resets the emergency stop of teleop_safety, o / c open / close the
-gripper (gripper node of rto_io).
+gripper (gripper node of rto_io). Keys are bound by the parameters keys.<command> (see
+key_bindings); a terminal reports only characters, so keys like arrows and Alt+ are not supported
+and turbo is always Shift.
 """
 
 import select
@@ -21,30 +23,30 @@ from rclpy.signals import SignalHandlerOptions
 from std_msgs.msg import Bool
 from std_srvs.srv import Trigger
 
-HELP = """
-Robotino keyboard teleop. Hold a key to move:
-  w / s : forward / backward
-  a / d : left / right
-  q / e : rotate left / right
-  Shift (W A S D Q E) : turbo
-  Space : stop
-  Ctrl+R : reset the emergency stop
-  o / c : open / close the gripper
-  Ctrl+C : quit
-"""
+from .key_bindings import declare_key_bindings, help_lines, keys_label, MOTION, parse_key
 
-# key: (x, y, yaw) direction
-MOVE_KEYS = {
-    'w': (1.0, 0.0, 0.0),
-    's': (-1.0, 0.0, 0.0),
-    'a': (0.0, 1.0, 0.0),
-    'd': (0.0, -1.0, 0.0),
-    'q': (0.0, 0.0, 1.0),
-    'e': (0.0, 0.0, -1.0),
-}
-KEY_STOP = ' '
-KEY_RESET = '\x12'  # Ctrl+R
-GRIPPER_KEYS = {'o': 'open', 'c': 'close'}
+KEY_QUIT = '\x03'  # Ctrl+C
+
+
+def key_char(key: str):
+    """Return the character of a key in a terminal, None if a terminal does not report it."""
+    modifiers, name = parse_key(key)
+    if name == 'space':
+        name = ' '
+    if len(name) != 1:
+        return None
+    if not modifiers:
+        return name
+    if modifiers == {'ctrl'} and 'a' <= name <= 'z':
+        return chr(ord(name) - ord('a') + 1)
+    return None
+
+
+def help_text(bindings: dict) -> str:
+    lines = help_lines(bindings, [c for c in bindings if c != 'turbo'])
+    return '\n'.join(['', 'Robotino keyboard teleop. Hold a key to move:']
+                     + [f'  {line}' for line in lines]
+                     + ['  Shift + motion key: turbo', '  Ctrl+C: quit', ''])
 
 
 class KeyboardTeleop(Node):
@@ -59,6 +61,25 @@ class KeyboardTeleop(Node):
         self.key_timeout = self.declare_parameter('key_timeout', 0.15).value
         self.first_key_timeout = self.declare_parameter('first_key_timeout', 0.6).value
         self.rate = self.declare_parameter('rate', 20.0).value
+        self.bindings = declare_key_bindings(self)
+        # Character -> command
+        self.commands = {}
+        for command, keys in self.bindings.items():
+            if command == 'turbo':
+                continue
+            for key in list(keys):
+                char = key_char(key)
+                if char is None or char == KEY_QUIT:
+                    self.get_logger().warning(
+                        f'Key "{key}" of {command} is not supported in the terminal: ignored')
+                    keys.remove(key)
+                elif char in self.commands:
+                    self.get_logger().warning(
+                        f'Key "{key}" of {command} is already bound to '
+                        f'{self.commands[char]}: ignored')
+                    keys.remove(key)
+                else:
+                    self.commands[char] = command
 
         self.cmd_vel_pub = self.create_publisher(Twist, '/robotino/cmd_vel_teleop', 10)
         self.reset_client = self.create_client(Trigger, '/robotino/safety/reset')
@@ -68,7 +89,7 @@ class KeyboardTeleop(Node):
 
         self.gripper_clients = {
             action: self.create_client(Trigger, f'/robotino/gripper/{action}')
-            for action in GRIPPER_KEYS.values()
+            for action in ('open', 'close')
         }
         self.gripper_future = None
         self.gripper_key = None
@@ -82,7 +103,8 @@ class KeyboardTeleop(Node):
 
     def estop_callback(self, msg: Bool):
         if msg.data:
-            print('\r\n*** EMERGENCY STOP: press Ctrl+R to reset ***\r')
+            print('\r\n*** EMERGENCY STOP: press '
+                  f'{keys_label(self.bindings, "reset_estop")} to reset ***\r')
         else:
             print('\r\nEmergency stop is not active\r')
 
@@ -124,19 +146,21 @@ class KeyboardTeleop(Node):
 
     def on_key(self, key: str):
         now = time.monotonic()
-        if key == KEY_RESET:
+        # Shift + a letter key gives an uppercase letter: turbo
+        command = self.commands.get(key, self.commands.get(key.lower()))
+        if command == 'reset_estop':
             self.request_reset()
-        elif key == KEY_STOP:
+        elif command == 'stop':
             self.stop()
-        elif key.lower() in GRIPPER_KEYS:
+        elif command in ('open_gripper', 'close_gripper'):
             # A held key is repeated by the terminal: send one command per press
             repeated = (key == self.gripper_key
                         and now - self.gripper_key_time < self.first_key_timeout)
             self.gripper_key = key
             self.gripper_key_time = now
             if not repeated:
-                self.request_gripper(GRIPPER_KEYS[key.lower()])
-        elif key.lower() in MOVE_KEYS:
+                self.request_gripper(command.split('_')[0])
+        elif command in MOTION:
             if key != self.key or now - self.last_key_time > self.first_key_timeout:
                 # A new key press: the terminal starts repeating it after the autorepeat delay
                 self.first_key_time = now
@@ -151,8 +175,9 @@ class KeyboardTeleop(Node):
             if now - self.last_key_time > timeout:
                 self.stop()
                 return
-            x, y, yaw = MOVE_KEYS[self.key.lower()]
-            scale = self.turbo_scale if self.key.isupper() else 1.0
+            command = self.commands.get(self.key, self.commands.get(self.key.lower()))
+            x, y, yaw = MOTION[command]
+            scale = self.turbo_scale if self.key != self.key.lower() else 1.0
             twist = Twist()
             twist.linear.x = x * self.linear_speed * scale
             twist.linear.y = y * self.linear_speed * scale
@@ -179,7 +204,7 @@ def main():
     rclpy.init(signal_handler_options=SignalHandlerOptions.NO)
     node = KeyboardTeleop()
     settings = termios.tcgetattr(sys.stdin)
-    print(HELP)
+    print(help_text(node.bindings))
     try:
         # cbreak: keys are read one by one without echo, Ctrl+C still raises KeyboardInterrupt
         tty.setcbreak(sys.stdin)

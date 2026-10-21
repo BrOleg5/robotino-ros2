@@ -4,7 +4,8 @@ Keyboard teleoperation of the omnidirectional base of Robotino in a window.
 Unlike a terminal, a window gets key press and release events, so held keys are combined:
 W+Q drives an arc, W+D drives diagonally. The robot moves only while keys are held and stops
 when the window loses focus. Ctrl+R resets the emergency stop of teleop_safety, O / C open / close
-the gripper (gripper node of rto_io).
+the gripper (gripper node of rto_io). Keys are bound by the parameters keys.<command>
+(see key_bindings).
 """
 
 import functools
@@ -21,43 +22,36 @@ from rclpy.signals import SignalHandlerOptions
 from std_msgs.msg import Bool
 from std_srvs.srv import Trigger
 
+from .key_bindings import declare_key_bindings, help_lines, keys_label, MOTION, normalize, \
+    parse_key
+
 Qt = QtCore.Qt
 # Qt 6 has scoped enums only, Qt 5 has unscoped ones
-Key = getattr(Qt, 'Key', Qt)
 Modifier = getattr(Qt, 'KeyboardModifier', Qt)
 FocusPolicy = getattr(Qt, 'FocusPolicy', Qt)
 Alignment = getattr(Qt, 'AlignmentFlag', Qt)
 EventType = getattr(QtCore.QEvent, 'Type', QtCore.QEvent)
 
 
-def enum_int(value) -> int:
-    return value.value if hasattr(value, 'value') else int(value)
-
-
-# Motion keys: (x, y, yaw) direction
-MOTION = {
-    'w': (1.0, 0.0, 0.0),
-    's': (-1.0, 0.0, 0.0),
-    'a': (0.0, 1.0, 0.0),
-    'd': (0.0, -1.0, 0.0),
-    'q': (0.0, 0.0, 1.0),
-    'e': (0.0, 0.0, -1.0),
-}
-# Keys by Qt key code (depends on the keyboard layout)
-KEYS_BY_CODE = {
-    enum_int(getattr(Key, f'Key_{k.upper()}')): k for k in list(MOTION) + ['r', 'o', 'c']}
-KEYS_BY_CODE[enum_int(Key.Key_Space)] = 'space'
-# Keys by X11 scan code (do not depend on the keyboard layout, e.g. Russian)
+# Keys by X11 scan code in the US layout: do not depend on the keyboard layout, e.g. Russian
 KEYS_BY_SCAN_CODE = {
-    24: 'q', 25: 'w', 26: 'e', 27: 'r', 32: 'o', 38: 'a', 39: 's', 40: 'd', 54: 'c', 65: 'space'}
+    **{10 + i: k for i, k in enumerate('1234567890-=')},
+    **{24 + i: k for i, k in enumerate('qwertyuiop[]')},
+    **{38 + i: k for i, k in enumerate("asdfghjkl;'`")},
+    51: '\\',
+    **{52 + i: k for i, k in enumerate('zxcvbnm,./')},
+    65: 'space',
+}
 
-HELP = (
-    'Hold keys to move, combine them for arcs and diagonals:\n'
-    'W / S: forward / backward    A / D: left / right    Q / E: rotate left / right\n'
-    'Shift: turbo    Space: stop    Ctrl+R: reset the emergency stop\n'
-    'O / C: open / close the gripper\n'
-    'The robot stops when this window loses focus'
-)
+
+def help_text(bindings: dict) -> str:
+    return '\n'.join([
+        'Hold keys to move, combine them for arcs and diagonals:',
+        '    '.join(help_lines(bindings, MOTION)),
+        '    '.join(help_lines(bindings, ['turbo', 'stop', 'reset_estop'])),
+        '    '.join(help_lines(bindings, ['open_gripper', 'close_gripper'])),
+        'The robot stops when this window loses focus',
+    ])
 
 
 class KeyboardTeleopNode(Node):
@@ -68,6 +62,7 @@ class KeyboardTeleopNode(Node):
         self.angular_speed = self.declare_parameter('angular_speed', 0.6).value
         self.turbo_scale = self.declare_parameter('turbo_scale', 2.0).value
         self.rate = self.declare_parameter('rate', 20.0).value
+        self.bindings = declare_key_bindings(self)
 
         self.cmd_vel_pub = self.create_publisher(Twist, '/robotino/cmd_vel_teleop', 10)
         self.reset_client = self.create_client(Trigger, '/robotino/safety/reset')
@@ -92,10 +87,10 @@ class KeyboardTeleopNode(Node):
     def estop_callback(self, msg: Bool):
         self.estop = msg.data
 
-    def twist(self, keys: set, turbo: bool) -> Twist:
-        x = sum(MOTION[k][0] for k in keys if k in MOTION)
-        y = sum(MOTION[k][1] for k in keys if k in MOTION)
-        yaw = sum(MOTION[k][2] for k in keys if k in MOTION)
+    def twist(self, commands, turbo: bool) -> Twist:
+        x = sum(MOTION[c][0] for c in commands if c in MOTION)
+        y = sum(MOTION[c][1] for c in commands if c in MOTION)
+        yaw = sum(MOTION[c][2] for c in commands if c in MOTION)
         scale = self.turbo_scale if turbo else 1.0
         # Diagonal motion is not faster than straight motion
         norm = math.hypot(x, y)
@@ -150,10 +145,24 @@ class TeleopWindow(QtWidgets.QWidget):
     def __init__(self, node: KeyboardTeleopNode):
         super().__init__()
         self.node = node
-        self.keys = set()
-        self.turbo = False
+        # Held keys: key name -> motion or turbo command
+        self.held = {}
         self.moving = False
         self.use_scan_codes = QtGui.QGuiApplication.platformName() == 'xcb'
+        self.commands = {}
+        for command, keys in node.bindings.items():
+            for key in list(keys):
+                binding = parse_key(key)
+                if binding in self.commands:
+                    node.get_logger().warning(
+                        f'Key "{key}" of {command} is already bound to '
+                        f'{self.commands[binding]}: ignored')
+                    keys.remove(key)
+                else:
+                    self.commands[binding] = command
+        # Modifiers bound to turbo (e.g. ctrl) are ignored when the other keys are matched
+        self.turbo_modifiers = {key for mods, key in self.commands
+                                if not mods and self.commands[(mods, key)] == 'turbo'}
 
         self.setWindowTitle('Robotino keyboard teleop')
         self.setFocusPolicy(FocusPolicy.StrongFocus)
@@ -170,41 +179,51 @@ class TeleopWindow(QtWidgets.QWidget):
         layout.addWidget(self.cmd_label)
         layout.addWidget(self.gripper_label)
         layout.addWidget(self.message_label)
-        layout.addWidget(QtWidgets.QLabel(HELP))
+        layout.addWidget(QtWidgets.QLabel(help_text(node.bindings)))
 
         self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.update_state)
         self.timer.start(int(1000 / node.rate))
 
-    def key_name(self, event):
-        if self.use_scan_codes:
-            return KEYS_BY_SCAN_CODE.get(event.nativeScanCode())
-        return KEYS_BY_CODE.get(event.key())
+    def key_name(self, event) -> str:
+        if self.use_scan_codes and event.nativeScanCode() in KEYS_BY_SCAN_CODE:
+            return KEYS_BY_SCAN_CODE[event.nativeScanCode()]
+        return normalize(QtGui.QKeySequence(event.key()).toString())
+
+    def command(self, event):
+        key = self.key_name(event)
+        modifiers = set()
+        if event.modifiers() & Modifier.ControlModifier:
+            modifiers.add('ctrl')
+        if event.modifiers() & Modifier.AltModifier:
+            modifiers.add('alt')
+        # A pressed modifier key is reported among the modifiers too
+        modifiers.discard(key)
+        command = self.commands.get((frozenset(modifiers), key))
+        if command is None:
+            command = self.commands.get((frozenset(modifiers - self.turbo_modifiers), key))
+        return key, command
 
     def keyPressEvent(self, event):
-        if event.key() == enum_int(Key.Key_Shift):
-            self.turbo = True
         if event.isAutoRepeat():
             return
-        key = self.key_name(event)
-        if key == 'r' and event.modifiers() & Modifier.ControlModifier:
+        key, command = self.command(event)
+        if command == 'reset_estop':
             self.stop()
             self.node.request_reset()
-        elif key == 'space':
+        elif command == 'stop':
             self.stop()
-        elif key == 'o':
+        elif command == 'open_gripper':
             self.node.request_gripper('open')
-        elif key == 'c' and not event.modifiers() & Modifier.ControlModifier:
+        elif command == 'close_gripper':
             self.node.request_gripper('close')
-        elif key in MOTION:
-            self.keys.add(key)
+        elif command in MOTION or command == 'turbo':
+            self.held[key] = command
 
     def keyReleaseEvent(self, event):
-        if event.key() == enum_int(Key.Key_Shift):
-            self.turbo = False
         if event.isAutoRepeat():
             return
-        self.keys.discard(self.key_name(event))
+        self.held.pop(self.key_name(event), None)
 
     def changeEvent(self, event):
         # Released keys are not reported to an inactive window: stop the robot
@@ -213,15 +232,15 @@ class TeleopWindow(QtWidgets.QWidget):
         super().changeEvent(event)
 
     def stop(self):
-        self.keys.clear()
-        self.turbo = False
+        self.held.clear()
         self.node.cmd_vel_pub.publish(Twist())
         self.moving = False
 
     def update_state(self):
         rclpy.spin_once(self.node, timeout_sec=0.0)
-        twist = self.node.twist(self.keys, self.turbo)
-        if self.keys:
+        commands = set(self.held.values())
+        twist = self.node.twist(commands, 'turbo' in commands)
+        if commands & MOTION.keys():
             self.node.cmd_vel_pub.publish(twist)
             self.moving = True
         elif self.moving:
@@ -233,7 +252,9 @@ class TeleopWindow(QtWidgets.QWidget):
         self.gripper_label.setText(self.node.gripper_status())
         self.message_label.setText(self.node.message)
         if self.node.estop:
-            self.estop_label.setText('EMERGENCY STOP: press Ctrl+R to reset')
+            self.estop_label.setText(
+                'EMERGENCY STOP: press '
+                f'{keys_label(self.node.bindings, "reset_estop")} to reset')
             self.estop_label.setStyleSheet('background: #c62828; color: white; font-weight: bold')
         elif self.node.estop is None:
             self.estop_label.setText('teleop_safety is not running: no safety layer')

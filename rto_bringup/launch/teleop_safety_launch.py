@@ -6,6 +6,7 @@ from launch import LaunchContext, LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+from rto_bringup.joy_bindings import load_joy_config
 import yaml
 
 # Robotino 3 and 4 are circles of this radius around base_link
@@ -97,6 +98,35 @@ def launch_collision_monitor(context: LaunchContext):
     ]
 
 
+def launch_teleop_safety(context: LaunchContext):
+    # Reset buttons of the gamepad are bound by name in joy_teleop.yaml
+    joy_params = load_joy_config(
+        context.perform_substitution(LaunchConfiguration('joy_config')))['teleop_safety']
+    return [
+        Node(
+            package='rto_teleop',
+            executable='teleop_safety',
+            name='teleop_safety',
+            output='screen',
+            parameters=[
+                LaunchConfiguration('params_file'),
+                {'use_sim_time': LaunchConfiguration('use_sim_time')},
+                joy_params,
+            ],
+            remappings=[
+                ('cmd_vel_in', '/robotino/cmd_vel_teleop'),
+                ('cmd_vel_out', '/robotino/cmd_vel_safe'),
+                ('bumper', '/robotino/bumper'),
+                ('contact', '/robotino/gripper/contact'),
+                ('joy', '/joy'),
+                ('emergency_stop', '/robotino/safety/emergency_stop'),
+                ('motion_blocked', '/robotino/safety/motion_blocked'),
+                ('reset', '/robotino/safety/reset'),
+            ],
+        ),
+    ]
+
+
 def generate_launch_description():
     # Velocity commands of the teleop are expected on /robotino/cmd_vel_teleop:
     # teleop_safety -> /robotino/cmd_vel_safe -> collision_monitor -> /robotino/cmd_vel
@@ -110,6 +140,14 @@ def generate_launch_description():
                 get_package_share_path('rto_bringup'), 'config', 'teleop_safety.yaml'
             ),
             description='collision_monitor and teleop_safety parameters',
+        ),
+        DeclareLaunchArgument(
+            'joy_config',
+            default_value=os.path.join(
+                get_package_share_path('rto_bringup'), 'config', 'joy_teleop.yaml'
+            ),
+            description='Gamepad bindings, the reset buttons of the emergency stop are taken '
+                        'from it',
         ),
         DeclareLaunchArgument(
             'use_sim_time',
@@ -134,23 +172,7 @@ def generate_launch_description():
             default_value='0.425',
             description='Limit the speed when an obstacle ahead is closer to the body [m]',
         ),
-        Node(
-            package='rto_teleop',
-            executable='teleop_safety',
-            name='teleop_safety',
-            output='screen',
-            parameters=[params_file, use_sim_time],
-            remappings=[
-                ('cmd_vel_in', '/robotino/cmd_vel_teleop'),
-                ('cmd_vel_out', '/robotino/cmd_vel_safe'),
-                ('bumper', '/robotino/bumper'),
-                ('contact', '/robotino/gripper/contact'),
-                ('joy', '/joy'),
-                ('emergency_stop', '/robotino/safety/emergency_stop'),
-                ('motion_blocked', '/robotino/safety/motion_blocked'),
-                ('reset', '/robotino/safety/reset'),
-            ],
-        ),
+        OpaqueFunction(function=launch_teleop_safety),
         OpaqueFunction(function=launch_collision_monitor),
         # collision_monitor is a lifecycle node: configure and activate it
         Node(

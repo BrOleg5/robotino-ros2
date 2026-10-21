@@ -132,6 +132,8 @@ Requirements: Ubuntu 26.04 with ROS 2 Lyrical or Ubuntu 24.04 with ROS 2 Jazzy, 
 `teleop_twist_joy`, the [safety layer](#teleop-safety) and the [gripper with the status LEDs](#gripper-and-status-leds).
 It works with the real robot and the simulation alike (add `use_sim_time:=true` for the simulation).
 
+Default bindings (see [Changing the bindings](#changing-the-gamepad-bindings)):
+
 | Control | Action |
 | --- | --- |
 | LB (hold) | Enable motion; releasing it stops the robot |
@@ -147,16 +149,45 @@ It works with the real robot and the simulation alike (add `use_sim_time:=true` 
 | `joy_vel` | `""` | Topic of velocity commands, empty: `/robotino/cmd_vel_teleop` with the safety layer, `/robotino/cmd_vel` without it |
 | `safety` | `true` | Start the [safety layer](#teleop-safety) |
 | `laser` | `true` | The safety layer uses the laser scan; `false` for a robot without the laser |
-| `gripper` | `true` | Start the [gripper and the status LEDs](#gripper-and-status-leds) and control the gripper with B / A |
-| `gripper_params_file` | [rto_bringup/config/gripper.yaml](rto_bringup/config/gripper.yaml) | Channels of the gripper and the LEDs, gamepad buttons of the gripper |
+| `gripper` | `true` | Start the [gripper and the status LEDs](#gripper-and-status-leds) and control it with the gamepad |
+| `gripper_params_file` | [rto_bringup/config/gripper.yaml](rto_bringup/config/gripper.yaml) | Channels of the gripper and the LEDs |
 | `use_sim_time` | `false` | `true` for the simulation |
-| `config_filepath` | `rto_bringup/config/joy_teleop.yaml` | Axes, buttons and speed scales |
+| `config_filepath` | [rto_bringup/config/joy_teleop.yaml](rto_bringup/config/joy_teleop.yaml) | Gamepad bindings and speeds |
 
-`game_controller_node` maps every gamepad known to SDL to the same layout of axes and buttons, so
-`joy_teleop.yaml` does not depend on the gamepad model (buttons are named as on an Xbox gamepad).
-`joy_node` publishes the raw layout of the gamepad driver instead, which does not match this file.
-To change the mapping, check axis and button numbers with `ros2 run joy game_controller_node` and
-`ros2 topic echo /joy`, then pass your own file with `config_filepath:=<path>`.
+#### Changing the gamepad bindings
+
+All gamepad commands are bound in [joy_teleop.yaml](rto_bringup/config/joy_teleop.yaml), by button and
+axis names:
+```yaml
+bindings:
+  forward: left_y  # Axis: drive forward / backward
+  left: left_x  # Axis: drive left / right
+  rotate_left: right_x  # Axis: rotate left / right
+  enable: lb  # Hold to drive
+  turbo: rb  # Hold to drive faster
+  reset_estop: [back, start]  # Hold together to reset the emergency stop, []: no reset
+  open_gripper: b
+  close_gripper: a
+speed:
+  linear: 0.3  # [m/s]
+  linear_turbo: 0.6
+  angular: 0.8  # [rad/s]
+  angular_turbo: 1.5
+```
+- Buttons: `a`, `b`, `x`, `y`, `back`, `guide`, `start`, `left_stick`, `right_stick`, `lb`, `rb`, `dpad_up`,
+  `dpad_down`, `dpad_left`, `dpad_right`, `misc1`, `paddle1`..`paddle4`, `touchpad`.
+- Axes: `left_x`, `left_y`, `right_x`, `right_y`, `lt`, `rt`; `-` before an axis inverts it (`-right_x`).
+- Numbers of buttons and axes are accepted too.
+
+The file is not a ROS parameter file: `joy_teleop_launch.py` converts it to the parameters of
+`teleop_twist_joy` and `gripper_joy`, and `teleop_safety_launch.py` (argument `joy_config`) to the reset
+buttons of `teleop_safety`. Pass your own copy with `config_filepath:=<path>`; an unknown name stops the launch
+with the list of known names.
+
+The names are those of the SDL GameController layout: `game_controller_node` maps every gamepad known to SDL
+to it, so the bindings do not depend on the gamepad model. `joy_node` publishes the raw layout of the gamepad
+driver instead, which does not match them. Check the buttons with `ros2 run joy game_controller_node` and
+`ros2 topic echo /joy`.
 
 The dev container gets the host's `/dev/input`, so gamepads connected to the host are available inside
 it, including ones plugged in after the container start. The container user needs read access to
@@ -167,10 +198,20 @@ it, including ones plugged in after the container start. The container user need
 `keyboard_teleop` of the `rto_teleop` package opens a small window and drives the robot while it has the
 keyboard focus. Start it together with the [safety layer](#teleop-safety):
 ```bash
-ros2 launch rto_bringup teleop_safety_launch.py   # use_sim_time:=true for the simulation
-ros2 run rto_teleop keyboard_teleop               # in another terminal
+ros2 launch rto_bringup keyboard_teleop_launch.py   # use_sim_time:=true for the simulation
 ```
-`joy_teleop_launch.py` starts the safety layer too, so with it running only `keyboard_teleop` is needed.
+
+| Argument | Default | Description |
+| --- | --- | --- |
+| `safety` | `true` | Start the [safety layer](#teleop-safety); `false`: commands go directly to `/robotino/cmd_vel` |
+| `laser` | `true` | The safety layer uses the laser scan; `false` for a robot without the laser |
+| `use_sim_time` | `false` | `true` for the simulation |
+| `config_filepath` | [rto_bringup/config/keyboard_teleop.yaml](rto_bringup/config/keyboard_teleop.yaml) | Key bindings and speeds |
+
+`joy_teleop_launch.py` starts the safety layer too, so with it running start only the node:
+`ros2 run rto_teleop keyboard_teleop`.
+
+Default bindings (see [Changing the bindings](#changing-the-keyboard-bindings)):
 
 | Key | Action |
 | --- | --- |
@@ -200,9 +241,37 @@ Both nodes publish to `/robotino/cmd_vel_teleop`; without the safety layer run t
 | --- | --- | --- |
 | `linear_speed` | `0.2` | Linear speed [m/s] |
 | `angular_speed` | `0.6` | Angular speed [rad/s] |
-| `turbo_scale` | `2.0` | Speed factor with Shift |
+| `turbo_scale` | `2.0` | Speed factor with the turbo key (Shift) |
 | `rate` | `20.0` | Rate of commands while keys are held [Hz] |
 | `key_timeout`, `first_key_timeout` | `0.15`, `0.6` | `keyboard_teleop_tty` only: stop if no key repeat comes within this time [s] |
+| `keys.<command>` | see below | Keys of a command |
+
+#### Changing the keyboard bindings
+
+Every command is bound to a list of keys by the parameter `keys.<command>`.
+[rto_bringup/config/keyboard_teleop.yaml](rto_bringup/config/keyboard_teleop.yaml) lists all of them with
+their defaults; edit a copy and pass it to the node:
+```bash
+ros2 launch rto_bringup keyboard_teleop_launch.py config_filepath:=/path/to/my_keyboard_teleop.yaml
+ros2 run rto_teleop keyboard_teleop --ros-args --params-file /path/to/my_keyboard_teleop.yaml
+```
+```yaml
+/**:
+  ros__parameters:
+    keys:
+      forward: ["w", "up"]
+      backward: ["s", "down"]
+      reset_estop: ["ctrl+x"]
+```
+Commands: `forward`, `backward`, `left`, `right`, `rotate_left`, `rotate_right`, `turbo`, `stop`,
+`reset_estop`, `open_gripper`, `close_gripper`. A key is named in lowercase: a character (`w`, `1`, `,`),
+`space` or a name of Qt (`up`, `left`, `f1`, `shift`, `ctrl`, `esc`, `return`, `pgup`), with optional `ctrl+`
+and `alt+` prefixes. Characters are recognized by their position in the US layout. The window and the
+messages show the bound keys; a key bound twice is reported in the log.
+
+`keyboard_teleop_tty` gets only characters from the terminal: it supports characters, `space` and
+`ctrl+<letter>` (except `ctrl+c`, quit), ignores other keys with a warning, and its turbo is always Shift +
+a motion key.
 
 ### Teleop safety
 
@@ -225,7 +294,8 @@ teleop -> /robotino/cmd_vel_teleop -> teleop_safety -> /robotino/cmd_vel_safe
   in its log). On a robot without the laser start the safety layer with `laser:=false`: then only the IR
   sensors see obstacles, up to 30 cm from the body, so the slow zone works only near obstacles.
 - **Emergency stop**: when the bumper is pressed, `teleop_safety` stops the robot and drops all commands
-  until the emergency stop is reset by holding Back + Start of the gamepad for 1 s, Ctrl+R in
+  until the emergency stop is reset by holding Back + Start of the gamepad for 1 s (`reset_estop` in
+  `joy_teleop.yaml`, `reset_hold_time` in `teleop_safety.yaml`), Ctrl+R in
   `keyboard_teleop` / `keyboard_teleop_tty` or
   `ros2 service call /robotino/safety/reset std_srvs/srv/Trigger`. After a reset the robot can move away
   while the bumper is still pressed; commands pass after the first zero command, so a deflected stick
@@ -401,7 +471,7 @@ works with the simulation and the real robot alike.
   - `gui:=false` runs Gazebo headless, `rviz:=false` disables RViz
   - `x:=`, `y:=`, `yaw:=` set the spawn pose
 - Drive the robot: `ros2 launch rto_bringup joy_teleop_launch.py use_sim_time:=true` or
-  [keyboard teleop](#keyboard-teleop) with `teleop_safety_launch.py use_sim_time:=true`
+  `ros2 launch rto_bringup keyboard_teleop_launch.py use_sim_time:=true` ([keyboard teleop](#keyboard-teleop))
 
 Wheels are velocity controlled by `omni_wheel_drive_controller`, which also computes the wheel odometry.
 The omniwheel rollers are modeled by anisotropic friction: wheels grip only in the rolling direction.

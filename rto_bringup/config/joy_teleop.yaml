@@ -1,24 +1,26 @@
-# teleop_twist_joy parameters for the omnidirectional base of Robotino.
-# Button and axis numbers are given in the SDL GameController layout of joy's game_controller_node,
-# which is the same for all gamepads known to SDL (named here as on an Xbox gamepad).
-teleop_twist_joy_node:
-  ros__parameters:
-    axis_linear:  # Left stick: forward/backward and sideways
-      x: 1
-      y: 0
-    scale_linear:
-      x: 0.3
-      y: 0.3
-    scale_linear_turbo:
-      x: 0.6
-      y: 0.6
+# Gamepad teleop of Robotino: commands bound to buttons and axes, and speeds.
+# Read by joy_teleop_launch.py (teleop_twist_joy, gripper_joy) and teleop_safety_launch.py
+# (teleop_safety); this is not a ROS parameter file.
+#
+# Buttons and axes are named in the SDL GameController layout of joy's game_controller_node,
+# which is the same for all gamepads known to SDL (named as on an Xbox gamepad):
+#   buttons: a, b, x, y, back, guide, start, left_stick, right_stick, lb, rb,
+#            dpad_up, dpad_down, dpad_left, dpad_right, misc1, paddle1..paddle4, touchpad
+#   axes: left_x, left_y, right_x, right_y, lt, rt
+# Numbers of the layout are accepted too. "-" before an axis inverts it, e.g. "-right_x".
 
-    axis_angular:  # Right stick horizontal: rotation
-      yaw: 2
-    scale_angular:
-      yaw: 0.8
-    scale_angular_turbo:
-      yaw: 1.5
+bindings:
+  forward: left_y  # Axis: drive forward / backward
+  left: left_x  # Axis: drive left / right
+  rotate_left: right_x  # Axis: rotate left / right
+  enable: lb  # Hold to drive, releasing it stops the robot
+  turbo: rb  # Hold to drive faster
+  reset_estop: [back, start]  # Hold together to reset the emergency stop, []: no reset
+  open_gripper: b
+  close_gripper: a
 
-    enable_button: 9  # LB: hold to drive
-    enable_turbo_button: 10  # RB: hold to drive faster
+speed:
+  linear: 0.3  # [m/s]
+  linear_turbo: 0.6
+  angular: 0.8  # [rad/s]
+  angular_turbo: 1.5

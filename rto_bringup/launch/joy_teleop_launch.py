@@ -7,6 +7,7 @@ from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+from rto_bringup.joy_bindings import load_joy_config
 
 
 def launch_teleop(context: LaunchContext):
@@ -15,18 +16,27 @@ def launch_teleop(context: LaunchContext):
         # With the safety layer commands go through teleop_safety and collision_monitor
         safety = context.perform_substitution(LaunchConfiguration('safety')) == 'true'
         joy_vel = '/robotino/cmd_vel_teleop' if safety else '/robotino/cmd_vel'
+    # Buttons and axes are bound by name in joy_teleop.yaml: convert them to parameters
+    params = load_joy_config(context.perform_substitution(LaunchConfiguration('config_filepath')))
+    use_sim_time = {'use_sim_time': LaunchConfiguration('use_sim_time')}
 
     return [
         Node(
             package='teleop_twist_joy',
             executable='teleop_node',
             name='teleop_twist_joy_node',
-            parameters=[
-                LaunchConfiguration('config_filepath'),
-                {'use_sim_time': LaunchConfiguration('use_sim_time')},
-            ],
+            parameters=[params['teleop_twist_joy_node'], use_sim_time],
             remappings=[('/cmd_vel', joy_vel)],
-        )
+        ),
+        Node(
+            package='rto_teleop',
+            executable='gripper_joy',
+            name='gripper_joy',
+            namespace='robotino',
+            parameters=[params['gripper_joy'], use_sim_time],
+            remappings=[('joy', '/joy')],
+            condition=IfCondition(LaunchConfiguration('gripper')),
+        ),
     ]
 
 
@@ -60,15 +70,14 @@ def generate_launch_description():
             default_value='true',
             choices=['true', 'false'],
             description='Start the gripper and the status LEDs on the I/O interface, '
-                        'open / close the gripper with B / A',
+                        'open / close the gripper with the gamepad',
         ),
         DeclareLaunchArgument(
             'gripper_params_file',
             default_value=os.path.join(
                 get_package_share_path('rto_bringup'), 'config', 'gripper.yaml'
             ),
-            description='Channels of the I/O interface used by the gripper and the status LEDs, '
-                        'gamepad buttons of the gripper',
+            description='Channels of the I/O interface used by the gripper and the status LEDs',
         ),
         DeclareLaunchArgument(
             'use_sim_time',
@@ -81,7 +90,7 @@ def generate_launch_description():
             default_value=os.path.join(
                 get_package_share_path('rto_bringup'), 'config', 'joy_teleop.yaml'
             ),
-            description='teleop_twist_joy parameters: gamepad axes, buttons and speed scales',
+            description='Gamepad bindings: buttons and axes of the commands, speeds',
         ),
         # game_controller_node maps axes and buttons of any gamepad known to SDL to one layout,
         # so joy_teleop.yaml does not depend on the gamepad model and its driver.
@@ -103,6 +112,7 @@ def generate_launch_description():
             launch_arguments={
                 'use_sim_time': LaunchConfiguration('use_sim_time'),
                 'laser': LaunchConfiguration('laser'),
+                'joy_config': LaunchConfiguration('config_filepath'),
             }.items(),
             condition=IfCondition(LaunchConfiguration('safety')),
         ),
@@ -114,18 +124,6 @@ def generate_launch_description():
                 'params_file': LaunchConfiguration('gripper_params_file'),
                 'use_sim_time': LaunchConfiguration('use_sim_time'),
             }.items(),
-            condition=IfCondition(LaunchConfiguration('gripper')),
-        ),
-        Node(
-            package='rto_teleop',
-            executable='gripper_joy',
-            name='gripper_joy',
-            namespace='robotino',
-            parameters=[
-                LaunchConfiguration('gripper_params_file'),
-                {'use_sim_time': LaunchConfiguration('use_sim_time')},
-            ],
-            remappings=[('joy', '/joy')],
             condition=IfCondition(LaunchConfiguration('gripper')),
         ),
     ])
