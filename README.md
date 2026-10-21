@@ -419,8 +419,16 @@ pose and the map can be edited in an image editor, but the pose is less precise.
   `ros2 launch rto_bringup amcl_launch.py map:=/home/ros/maps/lab.yaml use_sim_time:=true`
 
 Do not run it together with `slam_launch.py`: both publish `map` → `odom`.
-The robot is expected to start at the origin of the map; otherwise set its pose with **2D Pose Estimate**
-in RViz and drive a bit: AMCL updates the pose only after the robot moves 0.1 m or 0.1 rad.
+The robot is expected to start at the origin of the map: the particles are spread only about 0.5 m and 15° around
+it. Otherwise set its pose with **2D Pose Estimate** in RViz, or start with `global_localization:=true`,
+which spreads the particles over all free space of the map. The same at any time:
+```bash
+ros2 service call /reinitialize_global_localization std_srvs/srv/Empty
+```
+Then drive and turn the robot: AMCL updates the pose only after the robot moves 0.1 m or 0.1 rad
+(`ros2 service call /request_nomotion_update std_srvs/srv/Empty` forces an update without moving),
+and several different scans are needed to discard similar places. In symmetric rooms and corridors global
+localization may converge to a wrong pose; then use **2D Pose Estimate**.
 RViz shows the estimated pose with its covariance (display **AMCL pose**).
 
 | Argument | Default | Description |
@@ -428,8 +436,10 @@ RViz shows the estimated pose with its covariance (display **AMCL pose**).
 | `map` | `""` | Occupancy grid map `<path>.yaml`, required |
 | `params_file` | [rto_bringup/config/amcl.yaml](rto_bringup/config/amcl.yaml) | `map_server`, `amcl` and `lifecycle_manager` parameters |
 | `use_sim_time` | `false` | `true` for the simulation |
+| `global_localization` | `false` | `true` spreads the particles over the whole map instead of around the origin |
 | `rviz` | `true` | Start RViz |
 | `rviz_config_file` | `rto_bringup/rviz/amcl.rviz` | RViz config |
 
 AMCL uses the omnidirectional motion model `nav2_amcl::OmniMotionModel` and the likelihood field laser model
-with ranges up to 4 m.
+with ranges up to 4 m. When the scans match the map worse than on average, it injects random particles
+(`recovery_alpha_slow`, `recovery_alpha_fast`), so it recovers from a wrong pose.
