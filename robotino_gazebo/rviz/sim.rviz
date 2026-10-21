@@ -57,10 +57,16 @@ Visualization Manager:
       Covariance:
         Value: false
       Enabled: true
-      Keep: 50
+      Keep: 1000
       Name: Odometry
-      Position Tolerance: 0.1
+      Position Tolerance: 0.05
       Shape:
+        Alpha: 1
+        Color: 255; 170; 0
+        Head Length: 0.04
+        Head Radius: 0.02
+        Shaft Length: 0.06
+        Shaft Radius: 0.008
         Value: Arrow
       Topic:
         Depth: 5
