@@ -15,6 +15,7 @@ setup(
         ('share/' + package_name, ['launch/rto_bringup_launch.py']),
         ('share/' + package_name, ['launch/rto_rviz_launch.py']),
         ('share/' + package_name, ['launch/joy_teleop_launch.py']),
+        ('share/' + package_name, ['launch/keyboard_teleop_launch.py']),
         ('share/' + package_name, ['launch/slam_launch.py']),
         ('share/' + package_name, ['launch/amcl_launch.py']),
         ('share/' + package_name, ['launch/teleop_safety_launch.py']),

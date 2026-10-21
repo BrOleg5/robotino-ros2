@@ -198,10 +198,18 @@ it, including ones plugged in after the container start. The container user need
 `keyboard_teleop` of the `rto_teleop` package opens a small window and drives the robot while it has the
 keyboard focus. Start it together with the [safety layer](#teleop-safety):
 ```bash
-ros2 launch rto_bringup teleop_safety_launch.py   # use_sim_time:=true for the simulation
-ros2 run rto_teleop keyboard_teleop               # in another terminal
+ros2 launch rto_bringup keyboard_teleop_launch.py   # use_sim_time:=true for the simulation
 ```
-`joy_teleop_launch.py` starts the safety layer too, so with it running only `keyboard_teleop` is needed.
+
+| Argument | Default | Description |
+| --- | --- | --- |
+| `safety` | `true` | Start the [safety layer](#teleop-safety); `false`: commands go directly to `/robotino/cmd_vel` |
+| `laser` | `true` | The safety layer uses the laser scan; `false` for a robot without the laser |
+| `use_sim_time` | `false` | `true` for the simulation |
+| `config_filepath` | [rto_bringup/config/keyboard_teleop.yaml](rto_bringup/config/keyboard_teleop.yaml) | Key bindings and speeds |
+
+`joy_teleop_launch.py` starts the safety layer too, so with it running start only the node:
+`ros2 run rto_teleop keyboard_teleop`.
 
 Default bindings (see [Changing the bindings](#changing-the-keyboard-bindings)):
 
@@ -244,6 +252,7 @@ Every command is bound to a list of keys by the parameter `keys.<command>`.
 [rto_bringup/config/keyboard_teleop.yaml](rto_bringup/config/keyboard_teleop.yaml) lists all of them with
 their defaults; edit a copy and pass it to the node:
 ```bash
+ros2 launch rto_bringup keyboard_teleop_launch.py config_filepath:=/path/to/my_keyboard_teleop.yaml
 ros2 run rto_teleop keyboard_teleop --ros-args --params-file /path/to/my_keyboard_teleop.yaml
 ```
 ```yaml
@@ -462,7 +471,7 @@ works with the simulation and the real robot alike.
   - `gui:=false` runs Gazebo headless, `rviz:=false` disables RViz
   - `x:=`, `y:=`, `yaw:=` set the spawn pose
 - Drive the robot: `ros2 launch rto_bringup joy_teleop_launch.py use_sim_time:=true` or
-  [keyboard teleop](#keyboard-teleop) with `teleop_safety_launch.py use_sim_time:=true`
+  `ros2 launch rto_bringup keyboard_teleop_launch.py use_sim_time:=true` ([keyboard teleop](#keyboard-teleop))
 
 Wheels are velocity controlled by `omni_wheel_drive_controller`, which also computes the wheel odometry.
 The omniwheel rollers are modeled by anisotropic friction: wheels grip only in the rolling direction.
