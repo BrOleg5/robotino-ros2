@@ -18,6 +18,7 @@
   <exec_depend>robot_state_publisher</exec_depend>
   <exec_depend>robotino_description</exec_depend>
   <exec_depend>robotino_node</exec_depend>
+  <exec_depend>rto_io</exec_depend>
   <exec_depend>ros2lifecycle</exec_depend>
   <exec_depend>ros2service</exec_depend>
   <exec_depend>rto_teleop</exec_depend>

@@ -1,0 +1,45 @@
+# Gripper and status LEDs connected to the I/O interface of Robotino (package rto_io) and
+# gamepad control of the gripper (gripper_joy of rto_teleop).
+# The defaults are the wiring of the Robotino View program gamepad_control_gripper_safety.rvwx.
+#
+# Channels are named by their labels on the I/O interface connector:
+#   inputs: DI1..DI8; outputs: DQ1..DQ8 and relays R1, R2.
+# An empty string ("") means that the signal is not connected; the checks using a missing sensor
+# are skipped. *_active_low: true means that the channel is 0 when the signal is active.
+
+/**/gripper:
+  ros__parameters:
+    open_output: "DQ1"
+    close_output: "DQ2"
+    outputs_active_low: false
+    # Duration of the pulse on the open / close output [s]; 0.0: keep the output on until the next
+    # command (the other output is always switched off)
+    pulse_duration: 0.1
+    open_sensor: "DI1"  # 1: the gripper is open
+    open_sensor_active_low: false
+    object_sensor: "DI2"  # 0: an object is between the fingers
+    object_sensor_active_low: true
+    # Roller lever switches in front of the gripper, contact if any of them is pressed;
+    # [""]: no switches
+    contact_sensors: ["DI3", "DI4"]  # 0: pressed
+    contact_sensors_active_low: true
+    # Interlocks: open only on contact, close only on contact with an object between the fingers
+    require_contact: true
+    require_object_to_close: true
+
+/**/status_leds:
+  ros__parameters:
+    # Yellow is red and green: on contact of the roller lever switches the operator tries to move
+    # forward, sideways or rotate, only backward motion is allowed
+    red_led: "DQ4"  # Emergency stop, or an obstacle slows down or stops the robot
+    green_led: "DQ5"  # Normal operation
+    blue_led: "DQ6"  # Ready to grip: contact and an object between the fingers
+    leds_active_low: false
+    # Period of repeating the state of the LEDs [s], 0.0: publish only on change
+    refresh_period: 1.0
+
+/**/gripper_joy:
+  ros__parameters:
+    # SDL GameController layout of joy's game_controller_node, as in joy_teleop.yaml
+    open_button: 1  # B
+    close_button: 0  # A

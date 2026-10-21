@@ -3,9 +3,11 @@ Keyboard teleoperation of the omnidirectional base of Robotino in a window.
 
 Unlike a terminal, a window gets key press and release events, so held keys are combined:
 W+Q drives an arc, W+D drives diagonally. The robot moves only while keys are held and stops
-when the window loses focus. Ctrl+R resets the emergency stop of teleop_safety.
+when the window loses focus. Ctrl+R resets the emergency stop of teleop_safety, O / C open / close
+the gripper (gripper node of rto_io).
 """
 
+import functools
 import math
 import signal
 import sys
@@ -42,15 +44,18 @@ MOTION = {
     'e': (0.0, 0.0, -1.0),
 }
 # Keys by Qt key code (depends on the keyboard layout)
-KEYS_BY_CODE = {enum_int(getattr(Key, f'Key_{k.upper()}')): k for k in list(MOTION) + ['r']}
+KEYS_BY_CODE = {
+    enum_int(getattr(Key, f'Key_{k.upper()}')): k for k in list(MOTION) + ['r', 'o', 'c']}
 KEYS_BY_CODE[enum_int(Key.Key_Space)] = 'space'
 # Keys by X11 scan code (do not depend on the keyboard layout, e.g. Russian)
-KEYS_BY_SCAN_CODE = {24: 'q', 25: 'w', 26: 'e', 27: 'r', 38: 'a', 39: 's', 40: 'd', 65: 'space'}
+KEYS_BY_SCAN_CODE = {
+    24: 'q', 25: 'w', 26: 'e', 27: 'r', 32: 'o', 38: 'a', 39: 's', 40: 'd', 54: 'c', 65: 'space'}
 
 HELP = (
     'Hold keys to move, combine them for arcs and diagonals:\n'
     'W / S: forward / backward    A / D: left / right    Q / E: rotate left / right\n'
     'Shift: turbo    Space: stop    Ctrl+R: reset the emergency stop\n'
+    'O / C: open / close the gripper\n'
     'The robot stops when this window loses focus'
 )
 
@@ -71,6 +76,18 @@ class KeyboardTeleopNode(Node):
             Bool, '/robotino/safety/emergency_stop', self.estop_callback,
             QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL))
         self.message = ''
+
+        self.gripper_clients = {
+            'open': self.create_client(Trigger, '/robotino/gripper/open'),
+            'close': self.create_client(Trigger, '/robotino/gripper/close'),
+        }
+        self.gripper_future = None
+        self.gripper_state = {}
+        latched = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
+        for name in ('is_open', 'object_detected', 'contact'):
+            self.create_subscription(
+                Bool, f'/robotino/gripper/{name}',
+                functools.partial(self.gripper_state_callback, name), latched)
 
     def estop_callback(self, msg: Bool):
         self.estop = msg.data
@@ -94,6 +111,32 @@ class KeyboardTeleopNode(Node):
             self.message = 'teleop_safety is not running: nothing to reset'
             return
         self.reset_client.call_async(Trigger.Request()).add_done_callback(self.reset_done)
+
+    def gripper_state_callback(self, name: str, msg: Bool):
+        self.gripper_state[name] = msg.data
+
+    def request_gripper(self, action: str):
+        client = self.gripper_clients[action]
+        if not client.service_is_ready():
+            self.message = 'The gripper node is not running'
+            return
+        if self.gripper_future is not None and not self.gripper_future.done():
+            return
+        self.gripper_future = client.call_async(Trigger.Request())
+        self.gripper_future.add_done_callback(self.gripper_done)
+
+    def gripper_done(self, future):
+        result = future.result()
+        self.message = result.message if result else 'Gripper command failed'
+
+    def gripper_status(self) -> str:
+        def state(name, yes, no):
+            value = self.gripper_state.get(name)
+            return '?' if value is None else (yes if value else no)
+
+        return (f'Gripper: {state("is_open", "open", "closed")}   '
+                f'object: {state("object_detected", "yes", "no")}   '
+                f'contact: {state("contact", "yes", "no")}')
 
     def reset_done(self, future):
         result = future.result()
@@ -121,9 +164,11 @@ class TeleopWindow(QtWidgets.QWidget):
         self.cmd_label = QtWidgets.QLabel()
         self.cmd_label.setFont(QtGui.QFontDatabase.systemFont(
             getattr(QtGui.QFontDatabase, 'SystemFont', QtGui.QFontDatabase).FixedFont))
+        self.gripper_label = QtWidgets.QLabel()
         self.message_label = QtWidgets.QLabel()
         layout.addWidget(self.estop_label)
         layout.addWidget(self.cmd_label)
+        layout.addWidget(self.gripper_label)
         layout.addWidget(self.message_label)
         layout.addWidget(QtWidgets.QLabel(HELP))
 
@@ -147,6 +192,10 @@ class TeleopWindow(QtWidgets.QWidget):
             self.node.request_reset()
         elif key == 'space':
             self.stop()
+        elif key == 'o':
+            self.node.request_gripper('open')
+        elif key == 'c' and not event.modifiers() & Modifier.ControlModifier:
+            self.node.request_gripper('close')
         elif key in MOTION:
             self.keys.add(key)
 
@@ -181,6 +230,7 @@ class TeleopWindow(QtWidgets.QWidget):
         self.cmd_label.setText(
             f'x: {twist.linear.x:+.2f} m/s   y: {twist.linear.y:+.2f} m/s   '
             f'yaw: {twist.angular.z:+.2f} rad/s')
+        self.gripper_label.setText(self.node.gripper_status())
         self.message_label.setText(self.node.message)
         if self.node.estop:
             self.estop_label.setText('EMERGENCY STOP: press Ctrl+R to reset')

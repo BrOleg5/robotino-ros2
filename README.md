@@ -6,7 +6,8 @@ Supported ROS 2 distributions: **Lyrical** (default, Ubuntu 26.04) and **Jazzy**
 
 The original code was taken from [dietriro's robotino repository](https://github.com/dietriro/rto_core) and adapted for ROS2
 
-**Note:** Not all functionality has been enabled. North Star support, BHA support, and gripper support have been disabled.
+**Note:** Not all functionality has been enabled. North Star support and BHA support have been disabled.
+The gripper is supported when it is connected to the [I/O interface](#gripper-and-status-leds).
 
 ## Running in Docker
 
@@ -128,8 +129,8 @@ Requirements: Ubuntu 26.04 with ROS 2 Lyrical or Ubuntu 24.04 with ROS 2 Jazzy, 
 ### Gamepad teleop
 
 `ros2 launch rto_bringup joy_teleop_launch.py` starts `game_controller_node` of the `joy` package,
-`teleop_twist_joy` and the [safety layer](#teleop-safety). It works with the real robot and the simulation
-alike (add `use_sim_time:=true` for the simulation).
+`teleop_twist_joy`, the [safety layer](#teleop-safety) and the [gripper with the status LEDs](#gripper-and-status-leds).
+It works with the real robot and the simulation alike (add `use_sim_time:=true` for the simulation).
 
 | Control | Action |
 | --- | --- |
@@ -138,12 +139,16 @@ alike (add `use_sim_time:=true` for the simulation).
 | Left stick | Drive forward/backward and sideways |
 | Right stick, horizontal | Rotate |
 | Back + Start (hold 1 s) | Reset the emergency stop |
+| B / A | Open / close the gripper |
 
 | Argument | Default | Description |
 | --- | --- | --- |
 | `joy_dev` | `0` | Gamepad device id, if several gamepads are connected |
 | `joy_vel` | `""` | Topic of velocity commands, empty: `/robotino/cmd_vel_teleop` with the safety layer, `/robotino/cmd_vel` without it |
 | `safety` | `true` | Start the [safety layer](#teleop-safety) |
+| `laser` | `true` | The safety layer uses the laser scan; `false` for a robot without the laser |
+| `gripper` | `true` | Start the [gripper and the status LEDs](#gripper-and-status-leds) and control the gripper with B / A |
+| `gripper_params_file` | [rto_bringup/config/gripper.yaml](rto_bringup/config/gripper.yaml) | Channels of the gripper and the LEDs, gamepad buttons of the gripper |
 | `use_sim_time` | `false` | `true` for the simulation |
 | `config_filepath` | `rto_bringup/config/joy_teleop.yaml` | Axes, buttons and speed scales |
 
@@ -175,11 +180,13 @@ ros2 run rto_teleop keyboard_teleop               # in another terminal
 | Shift | Turbo |
 | Space | Stop |
 | Ctrl+R | Reset the emergency stop |
+| `O` / `C` | Open / close the [gripper](#gripper-and-status-leds) |
 
 Held keys are combined: `W`+`Q` drives an arc, `W`+`D` drives diagonally (at the same speed as straight),
 opposite keys cancel each other. The robot moves only while keys are held and stops when the window loses
 focus. Keys are recognized by their position, so they work with any keyboard layout. The window shows the
-command and the state of the emergency stop.
+command, the state of the emergency stop and the states of the gripper sensors. A held `O` / `C` sends one
+command to the gripper.
 
 Without a display (e.g. over SSH) use the terminal version `ros2 run rto_teleop keyboard_teleop_tty`
 with the same keys (lowercase, Shift + key for turbo) and Ctrl+C to quit. A terminal reports only the
@@ -214,13 +221,19 @@ teleop -> /robotino/cmd_vel_teleop -> teleop_safety -> /robotino/cmd_vel_safe
   a wall; rotation in place is never limited (the robot is round).
 - Obstacles are taken from the laser scan `/laser_scan` and the IR sensors `/robotino/ir0..8`. The laser
   sees 240° ahead; behind the robot only the IR sensors see obstacles, up to 30 cm from the body.
-  Without laser scans for 1 s collision_monitor stops the robot.
+  Without laser scans for 1 s collision_monitor stops the robot ("Robot to stop due to invalid source"
+  in its log). On a robot without the laser start the safety layer with `laser:=false`: then only the IR
+  sensors see obstacles, up to 30 cm from the body, so the slow zone works only near obstacles.
 - **Emergency stop**: when the bumper is pressed, `teleop_safety` stops the robot and drops all commands
   until the emergency stop is reset by holding Back + Start of the gamepad for 1 s, Ctrl+R in
   `keyboard_teleop` / `keyboard_teleop_tty` or
   `ros2 service call /robotino/safety/reset std_srvs/srv/Trigger`. After a reset the robot can move away
   while the bumper is still pressed; commands pass after the first zero command, so a deflected stick
   does not jerk the robot.
+- **Contact**: while a roller lever switch of the [gripper](#gripper-and-status-leds) is pressed, the robot
+  may only move backward to get away from the obstacle: forward and sideways motion and rotation are dropped
+  from the commands (`backward_only_on_contact` in `teleop_safety.yaml`). While the operator tries such
+  motion, `/robotino/safety/motion_blocked` is true and the status LEDs light yellow.
 
 The zones depend on the direction of the commanded velocity: `teleop_safety_launch.py` generates
 `velocity_polygon`s of collision_monitor for 24 directions. RViz (`rto_config.rviz`, `sim.rviz`) shows the
@@ -231,12 +244,14 @@ current zones (group **Safety zones**).
 | `/robotino/cmd_vel_teleop` | `geometry_msgs/Twist` | Commands of the teleop |
 | `/robotino/safety/emergency_stop` | `std_msgs/Bool` | Emergency stop is active, transient local |
 | `/robotino/safety/reset` | `std_srvs/Trigger` (service) | Reset the emergency stop |
+| `/robotino/safety/motion_blocked` | `std_msgs/Bool` | On contact of the gripper the operator tries to move other than backward, transient local |
 | `/collision_monitor_state` | `nav2_msgs/CollisionMonitorState` | Current action of collision_monitor |
 | `/collision_monitor/stop_zone`, `/collision_monitor/slow_zone` | `geometry_msgs/PolygonStamped` | Current zones |
 
 | Argument | Default | Description |
 | --- | --- | --- |
 | `params_file` | [rto_bringup/config/teleop_safety.yaml](rto_bringup/config/teleop_safety.yaml) | collision_monitor and teleop_safety parameters: speed limits, sensors, reset buttons |
+| `laser` | `true` | Use the laser scan; `false` for a robot without the laser |
 | `stop_distance` | `0.075` | Stop zone around the body [m] |
 | `slow_distance` | `0.425` | Slow zone around the body [m] |
 | `use_sim_time` | `false` | `true` for the simulation |
@@ -287,6 +302,52 @@ ros2 topic pub --once /robotino/gpio_commands control_msgs/msg/DynamicInterfaceG
   "{interface_groups: [digital_outputs, relays],
     interface_values: [{interface_names: [DQ1], values: [1.0]}, {interface_names: [R2], values: [1.0]}]}"
 ```
+
+### Gripper and status LEDs
+
+`gripper_launch.py` (started by `joy_teleop_launch.py` by default) starts two nodes of the `rto_io` package
+that work with the gripper and the status LEDs connected to the [I/O interface](#io-interface):
+```bash
+ros2 launch rto_bringup gripper_launch.py
+```
+
+- `gripper` opens and closes the gripper by two outputs and reports the states of its sensors. It checks
+  interlocks: the gripper opens only on contact of a roller lever switch and when it is not open yet; it closes
+  only when it is open, on contact and with an object between the fingers. A refused command returns
+  `success: false` with the reason.
+- `status_leds`: green in normal operation; red when collision_monitor slows down or stops the robot;
+  blue when the gripper is ready to grip (contact and an object between the fingers); yellow (red and green)
+  when on contact the operator tries to move other than backward. During an emergency stop only the red LED
+  is on. The LEDs are switched off when the node stops.
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `/robotino/gripper/open`, `/robotino/gripper/close` | `std_srvs/Trigger` (service) | Open / close the gripper |
+| `/robotino/gripper/is_open` | `std_msgs/Bool` | The gripper is open, transient local |
+| `/robotino/gripper/object_detected` | `std_msgs/Bool` | An object is between the fingers, transient local |
+| `/robotino/gripper/contact` | `std_msgs/Bool` | A roller lever switch is pressed, transient local |
+
+The wiring is set in [rto_bringup/config/gripper.yaml](rto_bringup/config/gripper.yaml); the defaults are the
+wiring of the Robotino View program `gamepad_control_gripper_safety.rvwx`:
+
+| Parameter | Default | Description |
+| --- | --- | --- |
+| `open_output`, `close_output` | `DQ1`, `DQ2` | Outputs opening / closing the gripper (`DQ1`..`DQ8`, `R1`, `R2`) |
+| `outputs_active_low` | `false` | The outputs are active at 0 |
+| `pulse_duration` | `0.1` | Pulse on the output [s]; `0.0`: keep it on until the next command |
+| `open_sensor` | `DI1` | The gripper is open, `active_low: false` |
+| `object_sensor` | `DI2` | An object is between the fingers, `active_low: true` |
+| `contact_sensors` | `[DI3, DI4]` | Roller lever switches, contact if any is pressed, `active_low: true` |
+| `require_contact`, `require_object_to_close` | `true`, `true` | Interlocks |
+| `red_led`, `green_led`, `blue_led` | `DQ4`, `DQ5`, `DQ6` | Outputs of the LEDs (`status_leds`) |
+| `leds_active_low` | `false` | The LEDs are on at 0 |
+
+An empty channel (`""`, `[""]` for `contact_sensors`) means that the signal is not connected; the interlocks
+using a missing sensor are skipped. For example, a gripper on the relays without the open sensor:
+```bash
+ros2 launch rto_bringup joy_teleop_launch.py gripper_params_file:=/path/to/my_gripper.yaml
+```
+with `open_output: "R1"`, `close_output: "R2"`, `open_sensor: ""` in the copy of `gripper.yaml`.
 
 ### Camera
 

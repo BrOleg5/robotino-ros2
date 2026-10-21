@@ -50,6 +50,27 @@ def generate_launch_description():
             description='Start the safety layer: slowdown near obstacles and emergency stop',
         ),
         DeclareLaunchArgument(
+            'laser',
+            default_value='true',
+            choices=['true', 'false'],
+            description='Safety layer uses the laser scan, false for a robot without the laser',
+        ),
+        DeclareLaunchArgument(
+            'gripper',
+            default_value='true',
+            choices=['true', 'false'],
+            description='Start the gripper and the status LEDs on the I/O interface, '
+                        'open / close the gripper with B / A',
+        ),
+        DeclareLaunchArgument(
+            'gripper_params_file',
+            default_value=os.path.join(
+                get_package_share_path('rto_bringup'), 'config', 'gripper.yaml'
+            ),
+            description='Channels of the I/O interface used by the gripper and the status LEDs, '
+                        'gamepad buttons of the gripper',
+        ),
+        DeclareLaunchArgument(
             'use_sim_time',
             default_value='false',
             choices=['true', 'false'],
@@ -79,7 +100,32 @@ def generate_launch_description():
             PythonLaunchDescriptionSource(os.path.join(
                 get_package_share_path('rto_bringup'), 'teleop_safety_launch.py'
             )),
-            launch_arguments={'use_sim_time': LaunchConfiguration('use_sim_time')}.items(),
+            launch_arguments={
+                'use_sim_time': LaunchConfiguration('use_sim_time'),
+                'laser': LaunchConfiguration('laser'),
+            }.items(),
             condition=IfCondition(LaunchConfiguration('safety')),
+        ),
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(os.path.join(
+                get_package_share_path('rto_bringup'), 'gripper_launch.py'
+            )),
+            launch_arguments={
+                'params_file': LaunchConfiguration('gripper_params_file'),
+                'use_sim_time': LaunchConfiguration('use_sim_time'),
+            }.items(),
+            condition=IfCondition(LaunchConfiguration('gripper')),
+        ),
+        Node(
+            package='rto_teleop',
+            executable='gripper_joy',
+            name='gripper_joy',
+            namespace='robotino',
+            parameters=[
+                LaunchConfiguration('gripper_params_file'),
+                {'use_sim_time': LaunchConfiguration('use_sim_time')},
+            ],
+            remappings=[('joy', '/joy')],
+            condition=IfCondition(LaunchConfiguration('gripper')),
         ),
     ])

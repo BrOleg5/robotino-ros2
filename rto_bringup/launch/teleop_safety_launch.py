@@ -6,6 +6,7 @@ from launch import LaunchContext, LaunchDescription
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+import yaml
 
 # Robotino 3 and 4 are circles of this radius around base_link
 ROBOT_RADIUS = 0.225
@@ -70,6 +71,14 @@ def launch_collision_monitor(context: LaunchContext):
     use_sim_time = {'use_sim_time': LaunchConfiguration('use_sim_time')}
     stop_distance = float(context.perform_substitution(LaunchConfiguration('stop_distance')))
     slow_distance = float(context.perform_substitution(LaunchConfiguration('slow_distance')))
+    sources = {}
+    if context.perform_substitution(LaunchConfiguration('laser')) != 'true':
+        # Without the laser source collision_monitor does not stop the robot for missing scans
+        with open(context.perform_substitution(params_file)) as f:
+            params = yaml.safe_load(f)['collision_monitor']['ros__parameters']
+        sources['observation_sources'] = [
+            source for source in params['observation_sources']
+            if params[source]['type'] != 'scan']
 
     return [
         Node(
@@ -82,6 +91,7 @@ def launch_collision_monitor(context: LaunchContext):
                 use_sim_time,
                 velocity_polygons('StopZone', stop_distance),
                 velocity_polygons('SlowZone', slow_distance),
+                sources,
             ],
         ),
     ]
@@ -108,6 +118,13 @@ def generate_launch_description():
             description='Use the Gazebo clock, true for the simulation',
         ),
         DeclareLaunchArgument(
+            'laser',
+            default_value='true',
+            choices=['true', 'false'],
+            description='Use the laser scan /laser_scan, false for a robot without the laser: '
+                        'only the IR sensors see obstacles',
+        ),
+        DeclareLaunchArgument(
             'stop_distance',
             default_value='0.075',
             description='Stop when an obstacle ahead is closer to the body [m]',
@@ -127,8 +144,10 @@ def generate_launch_description():
                 ('cmd_vel_in', '/robotino/cmd_vel_teleop'),
                 ('cmd_vel_out', '/robotino/cmd_vel_safe'),
                 ('bumper', '/robotino/bumper'),
+                ('contact', '/robotino/gripper/contact'),
                 ('joy', '/joy'),
                 ('emergency_stop', '/robotino/safety/emergency_stop'),
+                ('motion_blocked', '/robotino/safety/motion_blocked'),
                 ('reset', '/robotino/safety/reset'),
             ],
         ),
