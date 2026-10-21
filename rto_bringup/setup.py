@@ -23,6 +23,7 @@ setup(
             'config/amcl.yaml',
             'config/gripper.yaml',
             'config/joy_teleop.yaml',
+            'config/keyboard_teleop.yaml',
             'config/slam_toolbox_localization.yaml',
             'config/slam_toolbox_mapping.yaml',
             'config/teleop_safety.yaml',

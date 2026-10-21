@@ -1,0 +1,29 @@
+# Parameters of keyboard_teleop and keyboard_teleop_tty of rto_teleop:
+#   ros2 run rto_teleop keyboard_teleop --ros-args --params-file <this file>
+# The values here are the defaults of the nodes.
+#
+# Every command is bound to a list of keys. A key is named in lowercase: a letter, a digit or
+# another character ("w", "1", ","), "space" or a name of Qt ("up", "left", "f1", "shift", "ctrl",
+# "esc", "return", "pgup"), with optional "ctrl+" and "alt+" prefixes ("ctrl+r").
+# Characters are recognized by their position in the US layout, so they work with any layout.
+# keyboard_teleop_tty gets only characters from the terminal: it supports characters, "space" and
+# "ctrl+<letter>" only, and turbo there is always Shift + a motion key.
+
+/**:
+  ros__parameters:
+    linear_speed: 0.2  # [m/s]
+    angular_speed: 0.6  # [rad/s]
+    turbo_scale: 2.0  # Speed factor with the turbo key
+    rate: 20.0  # Rate of commands while keys are held [Hz]
+    keys:
+      forward: ["w"]
+      backward: ["s"]
+      left: ["a"]
+      right: ["d"]
+      rotate_left: ["q"]
+      rotate_right: ["e"]
+      turbo: ["shift"]  # Hold with motion keys
+      stop: ["space"]
+      reset_estop: ["ctrl+r"]  # Reset the emergency stop of teleop_safety
+      open_gripper: ["o"]
+      close_gripper: ["c"]

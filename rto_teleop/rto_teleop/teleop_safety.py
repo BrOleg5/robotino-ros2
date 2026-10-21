@@ -89,7 +89,7 @@ class TeleopSafety(Node):
             self.estop_pub.publish(Bool(data=True))
         self.get_logger().error(
             'Emergency stop: bumper is pressed. Hold the reset buttons of the gamepad '
-            'or press Ctrl+R in keyboard_teleop to continue')
+            'or press the reset key of keyboard_teleop (Ctrl+R by default) to continue')
 
     def reset(self) -> str:
         if not self.latched:
