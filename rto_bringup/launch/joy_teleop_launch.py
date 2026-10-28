@@ -10,6 +10,26 @@ from launch_ros.actions import Node
 from rto_bringup.joy_bindings import load_joy_config
 
 
+def launch_game_controller(context: LaunchContext):
+    # game_controller_node maps axes and buttons of any gamepad known to SDL to one layout,
+    # so joy_teleop.yaml does not depend on the gamepad model and its driver.
+    mapping_file = context.perform_substitution(
+        LaunchConfiguration('controller_mapping_file')
+    )
+    return [Node(
+        package='joy',
+        executable='game_controller_node',
+        name='game_controller_node',
+        parameters=[{
+            'device_id': LaunchConfiguration('joy_dev'),
+            'deadzone': 0.1,
+            'autorepeat_rate': 20.0,
+        }],
+        # Own mappings of gamepads that SDL does not know or maps incompletely
+        additional_env={'SDL_GAMECONTROLLERCONFIG_FILE': mapping_file} if mapping_file else None,
+    )]
+
+
 def launch_teleop(context: LaunchContext):
     joy_vel = context.perform_substitution(LaunchConfiguration('joy_vel'))
     if not joy_vel:
@@ -103,18 +123,13 @@ def generate_launch_description():
             ),
             description='Gamepad bindings: buttons and axes of the commands, speeds',
         ),
-        # game_controller_node maps axes and buttons of any gamepad known to SDL to one layout,
-        # so joy_teleop.yaml does not depend on the gamepad model and its driver.
-        Node(
-            package='joy',
-            executable='game_controller_node',
-            name='game_controller_node',
-            parameters=[{
-                'device_id': LaunchConfiguration('joy_dev'),
-                'deadzone': 0.1,
-                'autorepeat_rate': 20.0,
-            }],
+        DeclareLaunchArgument(
+            'controller_mapping_file',
+            default_value='',
+            description='File of own SDL gamepad mappings (SDL_GameControllerDB format), '
+                        'empty: only the mappings built into SDL',
         ),
+        OpaqueFunction(function=launch_game_controller),
         OpaqueFunction(function=launch_teleop),
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(os.path.join(

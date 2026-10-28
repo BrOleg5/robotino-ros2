@@ -199,6 +199,11 @@ to it, so the bindings do not depend on the gamepad model. `joy_node` publishes 
 driver instead, which does not match them. Check the buttons with `ros2 run joy game_controller_node` and
 `ros2 topic echo /joy`.
 
+A custom SDL mapping of a gamepad, for buttons and axes SDL does not map, is set with the `controller_mapping_file`
+argument of `joy_teleop_launch.py`: the path to a file in the format of
+[SDL_GameControllerDB](https://github.com/mdqinc/SDL_GameControllerDB). By default it is empty and only the
+mappings built into SDL are used.
+
 The dev container gets the host's `/dev/input`, so gamepads connected to the host are available inside
 it, including ones plugged in after the container start. The container user needs read access to
 `/dev/input/event*` on the host; if the gamepad is not found, check the permissions of its device.
