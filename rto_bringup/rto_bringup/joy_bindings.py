@@ -3,8 +3,8 @@ Gamepad bindings of joy_teleop.yaml: commands bound to buttons and axes by name.
 
 Names are those of the SDL GameController layout published by joy's game_controller_node, which
 is the same for all gamepads known to SDL (named as on an Xbox gamepad). Numbers are accepted too.
-load_joy_config() converts the file to the parameters of teleop_twist_joy, gripper_joy and
-teleop_safety.
+load_joy_config() converts the file to the parameters of teleop_twist_joy, joy_dpad, gripper_joy
+and teleop_safety.
 """
 
 import yaml
@@ -63,6 +63,13 @@ def load_joy_config(path: str) -> dict:
     reset = bindings.get('reset_estop', [])
     if not isinstance(reset, list):
         reset = [reset]
+    drive = bindings.get('drive_buttons', [])
+    if drive and (not isinstance(drive, list) or len(drive) != 4):
+        raise ValueError(
+            'joy_teleop.yaml: "drive_buttons" are 4 buttons: forward, backward, left, right')
+    if drive and not (speed['linear'] and speed['linear_turbo']):
+        raise ValueError(
+            'joy_teleop.yaml: "drive_buttons" need nonzero "linear" and "linear_turbo" speeds')
 
     return {
         'teleop_twist_joy_node': {
@@ -78,6 +85,19 @@ def load_joy_config(path: str) -> dict:
             'enable_button': button_index('enable', bindings['enable']),
             'enable_turbo_button': button_index('turbo', bindings['turbo']),
         },
+        # None without drive_buttons: joy_dpad is not started
+        'joy_dpad': {
+            'forward_axis': forward,
+            'left_axis': left,
+            'forward_sign': forward_sign,
+            'left_sign': left_sign,
+            'buttons': [button_index('drive_buttons', b) for b in drive],
+            # teleop_twist_joy multiplies the axes by the speed of the sticks
+            'scale': speed.get('linear_buttons', speed['linear']) / speed['linear'],
+            'scale_turbo': (speed.get('linear_buttons_turbo', speed['linear_turbo'])
+                            / speed['linear_turbo']),
+            'turbo_button': button_index('turbo', bindings['turbo']),
+        } if drive else None,
         'gripper_joy': {
             'open_button': button_index('open_gripper', bindings['open_gripper']),
             'close_button': button_index('close_gripper', bindings['close_gripper']),

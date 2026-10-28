@@ -1,6 +1,6 @@
 # Gamepad teleop of Robotino: commands bound to buttons and axes, and speeds.
-# Read by joy_teleop_launch.py (teleop_twist_joy, gripper_joy) and teleop_safety_launch.py
-# (teleop_safety); this is not a ROS parameter file.
+# Read by joy_teleop_launch.py (teleop_twist_joy, joy_dpad, gripper_joy) and
+# teleop_safety_launch.py (teleop_safety); this is not a ROS parameter file.
 #
 # Buttons and axes are named in the SDL GameController layout of joy's game_controller_node,
 # which is the same for all gamepads known to SDL (named as on an Xbox gamepad):
@@ -13,6 +13,8 @@ bindings:
   forward: left_y  # Axis: drive forward / backward
   left: left_x  # Axis: drive left / right
   rotate_left: right_x  # Axis: rotate left / right
+  # Buttons: drive forward, backward, left, right at linear_buttons while enable is held, []: off
+  drive_buttons: [dpad_up, dpad_down, dpad_left, dpad_right]
   enable: lb  # Hold to drive, releasing it stops the robot
   turbo: rb  # Hold to drive faster
   reset_estop: [back, start]  # Hold together to reset the emergency stop, []: no reset
@@ -22,5 +24,7 @@ bindings:
 speed:
   linear: 0.3  # [m/s]
   linear_turbo: 0.6
+  linear_buttons: 0.3  # [m/s] of drive_buttons, linear if omitted
+  linear_buttons_turbo: 0.6  # linear_turbo if omitted
   angular: 0.8  # [rad/s]
   angular_turbo: 1.5

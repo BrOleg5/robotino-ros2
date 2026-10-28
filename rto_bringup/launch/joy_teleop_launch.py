@@ -19,14 +19,16 @@ def launch_teleop(context: LaunchContext):
     # Buttons and axes are bound by name in joy_teleop.yaml: convert them to parameters
     params = load_joy_config(context.perform_substitution(LaunchConfiguration('config_filepath')))
     use_sim_time = {'use_sim_time': LaunchConfiguration('use_sim_time')}
+    # With drive_buttons teleop_twist_joy gets joy from joy_dpad, which drives with the buttons
+    joy_topic = '/joy_dpad' if params['joy_dpad'] else '/joy'
 
-    return [
+    nodes = [
         Node(
             package='teleop_twist_joy',
             executable='teleop_node',
             name='teleop_twist_joy_node',
             parameters=[params['teleop_twist_joy_node'], use_sim_time],
-            remappings=[('/cmd_vel', joy_vel)],
+            remappings=[('joy', joy_topic), ('/cmd_vel', joy_vel)],
         ),
         Node(
             package='rto_teleop',
@@ -38,6 +40,15 @@ def launch_teleop(context: LaunchContext):
             condition=IfCondition(LaunchConfiguration('gripper')),
         ),
     ]
+    if params['joy_dpad']:
+        nodes.append(Node(
+            package='rto_teleop',
+            executable='joy_dpad',
+            name='joy_dpad',
+            parameters=[params['joy_dpad'], use_sim_time],
+            remappings=[('joy', '/joy'), ('joy_dpad', joy_topic)],
+        ))
+    return nodes
 
 
 def generate_launch_description():

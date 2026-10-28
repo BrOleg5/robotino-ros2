@@ -20,6 +20,7 @@ setup(
     entry_points={
         'console_scripts': [
             'gripper_joy = rto_teleop.gripper_joy:main',
+            'joy_dpad = rto_teleop.joy_dpad:main',
             'keyboard_teleop = rto_teleop.keyboard_teleop:main',
             'keyboard_teleop_tty = rto_teleop.keyboard_teleop_tty:main',
             'teleop_safety = rto_teleop.teleop_safety:main',
