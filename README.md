@@ -131,6 +131,7 @@ Requirements: Ubuntu 26.04 with ROS 2 Lyrical or Ubuntu 24.04 with ROS 2 Jazzy, 
 `ros2 launch rto_bringup joy_teleop_launch.py` starts `game_controller_node` of the `joy` package,
 `teleop_twist_joy`, the [safety layer](#teleop-safety) and the [gripper with the status LEDs](#gripper-and-status-leds).
 It works with the real robot and the simulation alike (add `use_sim_time:=true` for the simulation).
+With `drive_buttons` in the bindings it also starts `joy_dpad` of `rto_teleop`, which drives with the D-pad.
 
 Default bindings (see [Changing the bindings](#changing-the-gamepad-bindings)):
 
@@ -140,6 +141,7 @@ Default bindings (see [Changing the bindings](#changing-the-gamepad-bindings)):
 | RB (hold) | Turbo: higher speed |
 | Left stick | Drive forward/backward and sideways |
 | Right stick, horizontal | Rotate |
+| D-pad | Drive forward/backward and sideways at a constant speed, diagonally with two directions |
 | Back + Start (hold 1 s) | Reset the emergency stop |
 | B / A | Open / close the gripper |
 
@@ -163,6 +165,8 @@ bindings:
   forward: left_y  # Axis: drive forward / backward
   left: left_x  # Axis: drive left / right
   rotate_left: right_x  # Axis: rotate left / right
+  # Buttons: drive forward, backward, left, right at linear_buttons while enable is held, []: off
+  drive_buttons: [dpad_up, dpad_down, dpad_left, dpad_right]
   enable: lb  # Hold to drive
   turbo: rb  # Hold to drive faster
   reset_estop: [back, start]  # Hold together to reset the emergency stop, []: no reset
@@ -171,6 +175,8 @@ bindings:
 speed:
   linear: 0.3  # [m/s]
   linear_turbo: 0.6
+  linear_buttons: 0.3  # [m/s] of drive_buttons, linear if omitted
+  linear_buttons_turbo: 0.6  # linear_turbo if omitted
   angular: 0.8  # [rad/s]
   angular_turbo: 1.5
 ```
@@ -178,6 +184,10 @@ speed:
   `dpad_down`, `dpad_left`, `dpad_right`, `misc1`, `paddle1`..`paddle4`, `touchpad`.
 - Axes: `left_x`, `left_y`, `right_x`, `right_y`, `lt`, `rt`; `-` before an axis inverts it (`-right_x`).
 - Numbers of buttons and axes are accepted too.
+- `drive_buttons` drive at the `linear_buttons` speed (`linear_buttons_turbo` with the turbo button) while
+  the enable button is held, at the speeds of the sticks if these are omitted; two of them at once drive
+  diagonally at the same speed. `joy_dpad` sets the `forward` and `left` axes by the pressed buttons and
+  passes `/joy` to `teleop_twist_joy` as `/joy_dpad`.
 
 The file is not a ROS parameter file: `joy_teleop_launch.py` converts it to the parameters of
 `teleop_twist_joy` and `gripper_joy`, and `teleop_safety_launch.py` (argument `joy_config`) to the reset
